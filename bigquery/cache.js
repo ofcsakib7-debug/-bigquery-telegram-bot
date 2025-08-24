@@ -7,10 +7,8 @@
 // Next Step: Implement cache expiration and cleanup
 // =============================================
 
-const { BigQuery } = require('@google-cloud/bigquery');
-const crypto = require('crypto');
-
 // Lazy initialization of BigQuery client with error handling
+let BigQuery = null;
 let bigquery = null;
 let bigqueryInitializationError = null;
 
@@ -25,6 +23,11 @@ function getBigQuery() {
   }
   
   try {
+    // Lazy load BigQuery module only when needed
+    if (!BigQuery) {
+      BigQuery = require('@google-cloud/bigquery').BigQuery;
+    }
+    
     // Attempt to initialize BigQuery client
     bigquery = new BigQuery();
     return bigquery;

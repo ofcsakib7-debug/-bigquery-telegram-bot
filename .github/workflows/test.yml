@@ -28,7 +28,7 @@ jobs:
       run: npm ci
       
     - name: Run environment check
-      run: node tests/setup.js
+      run: node tests/environment_check.js
       
     - name: Run unit tests
       run: npm run test:unit

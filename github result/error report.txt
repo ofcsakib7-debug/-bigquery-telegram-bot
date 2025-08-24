@@ -1,0 +1,17 @@
+Run node tests/setup.js
+Setting up test environment...
+/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/setup.js:14
+jest.mock('@google-cloud/bigquery');
+^
+
+ReferenceError: jest is not defined
+    at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/setup.js:14:1)
+    at Module._compile (node:internal/modules/cjs/loader:1364:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
+    at Module.load (node:internal/modules/cjs/loader:1203:32)
+    at Module._load (node:internal/modules/cjs/loader:1019:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
+    at node:internal/main/run_main_module:28:49
+
+Node.js v18.20.8
+Error: Process completed with exit code 1.
