@@ -1,0 +1,37 @@
+{
+  "name": "bigquery-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot interface for business operations in Bangladesh with Google Cloud BigQuery backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "test:verification": "node tests/system_verification.js",
+    "verify": "node verify_system.js",
+    "start": "node index.js",
+    "init": "node init.js"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "bigquery",
+    "google-cloud",
+    "bangladesh"
+  ],
+  "author": "Qwen Coder",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/bigquery": "^6.2.0",
+    "@google-cloud/firestore": "^6.8.0",
+    "@google-cloud/pubsub": "^3.7.1",
+    "@google-cloud/secret-manager": "^4.2.2",
+    "@google-cloud/storage": "^6.9.0",
+    "sharp": "^0.32.0",
+    "telegraf": "^4.12.2",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
