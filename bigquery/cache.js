@@ -73,7 +73,37 @@ async function getFromCache(cacheKey) {
  * @param {Object} data - Data to cache
  * @param {number} ttlHours - Time to live in hours (default: 1)
  */
-async function storeInCache(cacheKey, data, ttlHours = 1) {\n  try {\n    const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);\n    \n    const query = `\n      MERGE \\`${process.env.BIGQUERY_DATASET_ID || 'business_operations'}.master_cache\\` T\n      USING (SELECT @cacheKey as cache_key) S\n      ON T.cache_key = S.cache_key\n      WHEN MATCHED THEN\n        UPDATE SET \n          cached_data = @cachedData,\n          expires_at = @expiresAt,\n          hit_count = 0,\n          last_accessed = CURRENT_TIMESTAMP(),\n          updated_at = CURRENT_TIMESTAMP()\n      WHEN NOT MATCHED THEN\n        INSERT (cache_key, cached_data, expires_at, created_at, updated_at)\n        VALUES (@cacheKey, @cachedData, @expiresAt, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())\n    `;\n    \n    const options = {\n      query: query,\n      location: 'us-central1',\n      params: {\n        cacheKey,\n        cachedData: JSON.stringify(data),\n        expiresAt: expiresAt.toISOString()\n      }\n    };\n    \n    await getBigQuery().query(options);\n
+async function storeInCache(cacheKey, data, ttlHours = 1) {
+  try {
+    const expiresAt = new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+    
+    const query = `
+      MERGE \`${process.env.BIGQUERY_DATASET_ID || 'business_operations'}.master_cache\` T
+      USING (SELECT @cacheKey as cache_key) S
+      ON T.cache_key = S.cache_key
+      WHEN MATCHED THEN
+        UPDATE SET 
+          cached_data = @cachedData,
+          expires_at = @expiresAt,
+          hit_count = 0,
+          last_accessed = CURRENT_TIMESTAMP(),
+          updated_at = CURRENT_TIMESTAMP()
+      WHEN NOT MATCHED THEN
+        INSERT (cache_key, cached_data, expires_at, created_at, updated_at)
+        VALUES (@cacheKey, @cachedData, @expiresAt, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())
+    `;
+    
+    const options = {
+      query: query,
+      location: 'us-central1',
+      params: {
+        cacheKey,
+        cachedData: JSON.stringify(data),
+        expiresAt: expiresAt.toISOString()
+      }
+    };
+    
+    await getBigQuery().query(options);
     
   } catch (error) {
     console.error('Error storing data in cache:', error);
@@ -101,15 +131,6 @@ async function incrementCacheHitCount(cacheKey) {
     };
     
     await getBigQuery().query(options);
-  } catch (error) {
-    console.error('Error incrementing cache hit count:', error);
-    // Depending on requirements, you might want to re-throw the error
-    // or handle it in a specific way (e.g., logging, fallback logic).
-    // For now, we'll re-throw it to maintain the original function's behavior.
-    throw error;
-  }
-}
-    
   } catch (error) {
     console.error('Error incrementing cache hit count:', error);
   }

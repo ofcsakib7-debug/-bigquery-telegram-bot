@@ -24,6 +24,7 @@
   "dependencies": {
     "@google-cloud/bigquery": "^6.2.0",
     "@google-cloud/firestore": "^6.8.0",
+    "@google-cloud/kms": "^5.1.0",
     "@google-cloud/pubsub": "^3.7.1",
     "@google-cloud/secret-manager": "^4.2.2",
     "@google-cloud/storage": "^6.9.0",
