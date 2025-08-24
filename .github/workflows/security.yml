@@ -1,0 +1,107 @@
+# .github/workflows/security.yml
+name: Security Scan
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run npm audit
+      run: |
+        echo "=== Running npm audit ==="
+        npm audit --audit-level=moderate || echo "⚠️  Vulnerabilities found - check details above"
+        
+    - name: Check for sensitive files
+      run: |
+        echo "=== Checking for sensitive files ==="
+        # Check for common sensitive files that shouldn't be committed
+        sensitive_files=(
+          ".env"
+          "*.key"
+          "*.pem"
+          "*.cert"
+          "credentials.json"
+          "service-account.json"
+        )
+        
+        found_sensitive=0
+        for pattern in "${sensitive_files[@]}"; do
+          if find . -name "$pattern" -not -path "./node_modules/*" -not -path "./.git/*" | grep -q .; then
+            echo "⚠️  Found potentially sensitive file matching pattern: $pattern"
+            find . -name "$pattern" -not -path "./node_modules/*" -not -path "./.git/*"
+            found_sensitive=1
+          fi
+        done
+        
+        if [ $found_sensitive -eq 0 ]; then
+          echo "✅ No sensitive files found"
+        else
+          echo "⚠️  Review sensitive files above"
+        fi
+        
+    - name: Check package.json for security issues
+      run: |
+        echo "=== Checking package.json for security issues ==="
+        node -e "
+          const fs = require('fs');
+          try {
+            const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            
+            // Check for scripts that might be dangerous
+            const dangerousPatterns = [
+              'rm -rf',
+              'chmod 777',
+              'eval(',
+              'exec('
+            ];
+            
+            let foundDangerous = false;
+            if (packageJson.scripts) {
+              for (const [name, script] of Object.entries(packageJson.scripts)) {
+                for (const pattern of dangerousPatterns) {
+                  if (script.includes(pattern)) {
+                    console.log('⚠️  Potentially dangerous script found in package.json:');
+                    console.log('   Script name:', name);
+                    console.log('   Script content:', script);
+                    console.log('   Dangerous pattern:', pattern);
+                    foundDangerous = true;
+                  }
+                }
+              }
+            }
+            
+            if (!foundDangerous) {
+              console.log('✅ No dangerous scripts found in package.json');
+            }
+          } catch (error) {
+            console.log('❌ Error checking package.json:', error.message);
+          }
+        "
+        
+    - name: Generate security report
+      if: always()
+      run: |
+        echo "=== Security Scan Report ==="
+        echo "Job status: ${{ job.status }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        echo ""
+        echo "Security scan completed at: $(date -u)"

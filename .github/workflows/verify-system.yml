@@ -1,0 +1,150 @@
+# .github/workflows/verify-system.yml
+name: Verify System Components
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js 18
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Check module imports
+      run: |
+        echo "=== Testing Module Imports ==="
+        node -e "
+          try {
+            const payment = require('./functions/payment');
+            console.log('✅ Payment module imports successfully');
+          } catch (error) {
+            console.log('❌ Payment module error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const snooze = require('./functions/snooze');
+            console.log('✅ Snooze module imports successfully');
+          } catch (error) {
+            console.log('❌ Snooze module error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const cache = require('./bigquery/cache');
+            console.log('✅ Cache module imports successfully');
+          } catch (error) {
+            console.log('❌ Cache module error:', error.message);
+            process.exit(1);
+          }
+        "
+        
+    - name: Check function accessibility
+      run: |
+        echo "=== Testing Function Accessibility ==="
+        node -e "
+          try {
+            const { validateChallanNumbers } = require('./functions/payment');
+            if (typeof validateChallanNumbers === 'function') {
+              console.log('✅ validateChallanNumbers function accessible');
+              // Test the function
+              const result = validateChallanNumbers('CH-2023-1001');
+              console.log('✅ Function execution result:', JSON.stringify(result));
+            } else {
+              console.log('❌ validateChallanNumbers function not accessible');
+              process.exit(1);
+            }
+          } catch (error) {
+            console.log('❌ Function accessibility error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const { generateCacheKey } = require('./bigquery/cache');
+            if (typeof generateCacheKey === 'function') {
+              console.log('✅ generateCacheKey function accessible');
+              // Test the function
+              const result = generateCacheKey('test', 'user123', 'context');
+              console.log('✅ Function execution result:', result);
+            } else {
+              console.log('❌ generateCacheKey function not accessible');
+              process.exit(1);
+            }
+          } catch (error) {
+            console.log('❌ Function accessibility error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const { calculateSnoozeUntil } = require('./functions/snooze');
+            if (typeof calculateSnoozeUntil === 'function') {
+              console.log('✅ calculateSnoozeUntil function accessible');
+              // Test the function
+              const result = calculateSnoozeUntil('1h');
+              console.log('✅ Function execution result:', result.toISOString());
+            } else {
+              console.log('❌ calculateSnoozeUntil function not accessible');
+              process.exit(1);
+            }
+          } catch (error) {
+            console.log('❌ Function accessibility error:', error.message);
+            process.exit(1);
+          }
+        "
+        
+    - name: Check file structure
+      run: |
+        echo "=== Checking File Structure ==="
+        required_files=(
+          "functions/payment.js"
+          "functions/snooze.js"
+          "bigquery/cache.js"
+          "cloudbuild.yaml"
+          "package.json"
+        )
+        
+        for file in "${required_files[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file is missing"
+            exit 1
+          fi
+        done
+        
+    - name: Check package.json scripts
+      run: |
+        echo "=== Checking package.json Scripts ==="
+        node -e "
+          const fs = require('fs');
+          try {
+            const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+            const requiredScripts = ['test:unit', 'test:integration', 'test:e2e', 'verify'];
+            
+            for (const script of requiredScripts) {
+              if (packageJson.scripts && packageJson.scripts[script]) {
+                console.log('✅ ' + script + ' script exists');
+              } else {
+                console.log('❌ ' + script + ' script is missing');
+                process.exit(1);
+              }
+            }
+            console.log('✅ All required scripts present');
+          } catch (error) {
+            console.log('❌ Error checking package.json:', error.message);
+            process.exit(1);
+          }
+        "
