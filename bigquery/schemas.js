@@ -74,6 +74,12 @@ const PAYMENT_RECEIPTS_SCHEMA = {
         mode: 'REQUIRED'
       },
       {
+        name: 'remarks',
+        type: 'STRING',
+        mode: 'REPEATED',
+        description: 'User remarks extracted from input in parentheses'
+      },
+      {
         name: 'receiving_branch_id',
         type: 'STRING',
         mode: 'REQUIRED'
@@ -221,6 +227,12 @@ const ACCOUNTING_GENERAL_LEDGER_SCHEMA = {
         name: 'narration',
         type: 'STRING',
         mode: 'REQUIRED'
+      },
+      {
+        name: 'remarks',
+        type: 'STRING',
+        mode: 'REPEATED',
+        description: 'User remarks extracted from input in parentheses'
       },
       {
         name: 'reference_id',

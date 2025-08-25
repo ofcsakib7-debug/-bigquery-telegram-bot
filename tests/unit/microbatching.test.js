@@ -28,6 +28,10 @@ describe('Microbatching Functionality', () => {
     mockBigQuery.dataset.mockReturnThis();
     mockBigQuery.table.mockReturnThis();
     mockBigQuery.insert.mockResolvedValue();
+    
+    // Clear batch storage to ensure clean state for each test
+    const microbatching = require('../../bigquery/microbatching');
+    microbatching.clearAllBatches();
   });
 
   describe('insertRecord', () => {
@@ -67,6 +71,11 @@ describe('Microbatching Functionality', () => {
 
   describe('flushBatch', () => {
     test('should insert batch records into BigQuery', async () => {
+      // Mock Date for consistent timestamps
+      const now = new Date('2023-11-05T10:00:00Z');
+      jest.useFakeTimers();
+      jest.setSystemTime(now);
+
       // Add some records to the batch first
       const testRecord1 = { id: 'test1', name: 'Test Record 1' };
       const testRecord2 = { id: 'test2', name: 'Test Record 2' };
@@ -77,13 +86,28 @@ describe('Microbatching Functionality', () => {
       // Flush the batch
       await flushBatch('test_dataset', 'test_table');
 
-      // Verify BigQuery insert was called
+      // Verify BigQuery insert was called with properly timestamped records
       expect(mockBigQuery.dataset).toHaveBeenCalledWith('test_dataset');
       expect(mockBigQuery.table).toHaveBeenCalledWith('test_table');
-      expect(mockBigQuery.insert).toHaveBeenCalledWith([
-        expect.objectContaining({ id: 'test1' }),
-        expect.objectContaining({ id: 'test2' })
-      ]);
+      
+      // Get the actual call arguments
+      const insertCall = mockBigQuery.insert.mock.calls[0][0];
+      expect(insertCall).toHaveLength(2);
+      expect(insertCall[0]).toMatchObject({ 
+        id: 'test1', 
+        name: 'Test Record 1',
+        created_at: now.toISOString(),
+        updated_at: now.toISOString()
+      });
+      expect(insertCall[1]).toMatchObject({ 
+        id: 'test2', 
+        name: 'Test Record 2',
+        created_at: now.toISOString(),
+        updated_at: now.toISOString()
+      });
+
+      // Restore real timers
+      jest.useRealTimers();
     });
 
     test('should handle empty batch gracefully', async () => {

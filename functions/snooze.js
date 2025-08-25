@@ -78,15 +78,18 @@ function calculateSnoozeUntil(duration) {
     case '2h':
       return new Date(now.getTime() + 2 * 60 * 60 * 1000);
     case 'work_end':
-      // Assume work ends at 5pm
+      // Assume work ends at 5pm UTC
       const workEnd = new Date();
-      workEnd.setHours(17, 0, 0, 0); // 5:00 PM
+      workEnd.setUTCFullYear(workEnd.getUTCFullYear());
+      workEnd.setUTCMonth(workEnd.getUTCMonth());
+      workEnd.setUTCDate(workEnd.getUTCDate());
+      workEnd.setUTCHours(17, 0, 0, 0); // 5:00 PM UTC
       return workEnd;
     case 'tomorrow':
-      // Tomorrow morning at 9am
+      // Tomorrow morning at 9am UTC
       const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(9, 0, 0, 0); // 9:00 AM
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      tomorrow.setUTCHours(9, 0, 0, 0); // 9:00 AM UTC
       return tomorrow;
     default:
       // Default to 1 hour

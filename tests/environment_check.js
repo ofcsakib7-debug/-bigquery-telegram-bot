@@ -52,12 +52,12 @@ coreModules.forEach(module => {
 // Test importing our project modules
 console.log('\n4. Checking project modules...');
 const projectModules = [
-  { name: 'BigQuery Cache', path: './bigquery/cache' },
-  { name: 'Payment Functions', path: './functions/payment' },
-  { name: 'Snooze Functions', path: './functions/snooze' },
-  { name: 'Error Handling', path: './functions/error_handling' },
-  { name: 'Security Functions', path: './functions/security' },
-  { name: 'Microbatching', path: './bigquery/microbatching' }
+  { name: 'BigQuery Cache', path: '../bigquery/cache' },
+  { name: 'Payment Functions', path: '../functions/payment' },
+  { name: 'Snooze Functions', path: '../functions/snooze' },
+  { name: 'Error Handling', path: '../functions/error_handling' },
+  { name: 'Security Functions', path: '../functions/security' },
+  { name: 'Microbatching', path: '../bigquery/microbatching' }
 ];
 
 projectModules.forEach(module => {

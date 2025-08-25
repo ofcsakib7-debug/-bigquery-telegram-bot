@@ -198,9 +198,9 @@ async function handleTelegramApiError(error, userId) {
  * Implement circuit breaker pattern
  */
 class CircuitBreaker {
-  constructor(failureThreshold = 5, resetTimeout = 60000) {
-    this.failureThreshold = failureThreshold;
-    this.resetTimeout = resetTimeout;
+  constructor(options = {}) {
+    this.failureThreshold = options.failureThreshold || 5;
+    this.resetTimeout = options.resetTimeout || 60000;
     this.failureCount = 0;
     this.lastFailureTime = null;
     this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN

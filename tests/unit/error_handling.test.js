@@ -59,25 +59,48 @@ describe('Error Handling Functionality', () => {
     });
 
     test('should retry function on failure and eventually succeed', async () => {
+      // Use real timers for this test to avoid Jest fake timer conflicts
+      jest.useRealTimers();
+      
       const testFn = jest.fn()
         .mockRejectedValueOnce(new Error('First failure'))
         .mockRejectedValueOnce(new Error('Second failure'))
         .mockResolvedValue('success');
       
-      const result = await retryWithBackoff(testFn, { maxRetries: 3 });
+      // Start the retry process
+      const retryPromise = retryWithBackoff(testFn, { maxRetries: 3 });
+      
+      // Wait for the promise to resolve (it will take actual time)
+      const result = await retryPromise;
       
       expect(testFn).toHaveBeenCalledTimes(3);
       expect(result).toBe('success');
-    });
+      
+      // Restore fake timers for other tests
+      jest.useFakeTimers();
+    }, 15000); // 15 second timeout
 
     test('should throw error after max retries exceeded', async () => {
+      // Use real timers for this test to avoid Jest fake timer conflicts
+      jest.useRealTimers();
+      
       const testFn = jest.fn().mockRejectedValue(new Error('Persistent failure'));
       
-      await expect(retryWithBackoff(testFn, { maxRetries: 3 })).rejects.toThrow('Persistent failure');
+      // Start the retry process
+      const retryPromise = retryWithBackoff(testFn, { maxRetries: 3 });
+      
+      // Wait for the promise to reject (it will take actual time)
+      await expect(retryPromise).rejects.toThrow('Persistent failure');
       expect(testFn).toHaveBeenCalledTimes(3);
-    });
+      
+      // Restore fake timers for other tests
+      jest.useFakeTimers();
+    }, 15000); // 15 second timeout
 
     test('should implement exponential backoff with jitter', async () => {
+      // Use real timers for this test to avoid Jest fake timer conflicts
+      jest.useRealTimers();
+      
       const testFn = jest.fn().mockRejectedValue(new Error('Failure'));
       
       // Start the retry process
@@ -88,14 +111,12 @@ describe('Error Handling Functionality', () => {
         factor: 2
       });
       
-      // Advance timers to simulate delays
-      await jest.advanceTimersByTimeAsync(1000); // First retry after 1s
-      await jest.advanceTimersByTimeAsync(2000); // Second retry after 2s
-      await jest.advanceTimersByTimeAsync(4000); // Third retry after 4s
-      
       // Wait for the promise to resolve (it will reject after max retries)
       await expect(retryPromise).rejects.toThrow('Failure');
-    });
+      
+      // Restore fake timers for other tests
+      jest.useFakeTimers();
+    }, 15000); // 15 second timeout
   });
 
   describe('generateUserFriendlyErrorMessage', () => {

@@ -229,15 +229,29 @@ async function handleChallanEntry(challanNumbers, userId) {
       return;
     }
     
-    // Update user state with challan numbers
-    await updateUserPaymentState(userId, {
+    // Update user state with challan numbers and remarks
+    const userStateUpdate = {
       state: 'evidence_collection',
       challanNumbers: validationResult.challanNumbers,
       timestamp: new Date().toISOString()
-    });
+    };
+    
+    // Add remarks to user state if they exist
+    if (validationResult.hasRemarks && validationResult.remarks.length > 0) {
+      userStateUpdate.remarks = validationResult.remarks;
+    }
+    
+    await updateUserPaymentState(userId, userStateUpdate);
     
     // Generate evidence collection message
     const message = generateEvidenceCollectionMessage();
+    
+    // Add remarks confirmation if they exist
+    if (validationResult.hasRemarks) {
+      const { generateRemarksConfirmation } = require('./remarks');
+      const remarksMessage = generateRemarksConfirmation(validationResult.remarks);
+      console.log(`Remarks confirmation for user ${userId}:`, remarksMessage);
+    }
     
     // Generate evidence collection keyboard
     const keyboard = generateEvidenceCollectionKeyboard();
@@ -258,8 +272,15 @@ async function handleChallanEntry(challanNumbers, userId) {
  */
 function validateChallanNumbers(challanNumbers) {
   try {
+    // Extract remarks from input
+    const { extractRemarks } = require('./remarks');
+    const remarksResult = extractRemarks(challanNumbers);
+    
+    // Use cleaned text for validation
+    const cleanedChallanNumbers = remarksResult.cleanedText;
+    
     // Split challan numbers by space
-    const challanArray = challanNumbers.trim().split(/\s+/);
+    const challanArray = cleanedChallanNumbers.trim().split(/\s+/);
     
     // Check if we have at least one challan
     if (challanArray.length === 0 || (challanArray.length === 1 && challanArray[0] === '')) {
@@ -290,7 +311,9 @@ function validateChallanNumbers(challanNumbers) {
     
     return {
       valid: true,
-      challanNumbers: challanArray
+      challanNumbers: challanArray,
+      remarks: remarksResult.remarks,
+      hasRemarks: remarksResult.hasRemarks
     };
   } catch (error) {
     console.error('Error validating challan numbers:', error);

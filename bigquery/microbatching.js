@@ -151,9 +151,17 @@ function insertRecord(datasetId, tableId, record) {
 // Start automatic batch flushing
 startBatchFlushing();
 
+/**
+ * Clear all batches (for testing purposes)
+ */
+function clearAllBatches() {
+  batchStorage.clear();
+}
+
 // Export functions
 module.exports = {
   insertRecord,
   flushBatch,
-  flushAllBatches
+  flushAllBatches,
+  clearAllBatches
 };

@@ -1,17 +1,43 @@
-Run node tests/setup.js
-Setting up test environment...
-/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/setup.js:14
-jest.mock('@google-cloud/bigquery');
-^
+Run node tests/environment_check.js
+=== GitHub Actions Environment Check ===
 
-ReferenceError: jest is not defined
-    at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/setup.js:14:1)
-    at Module._compile (node:internal/modules/cjs/loader:1364:14)
-    at Module._extensions..js (node:internal/modules/cjs/loader:1422:10)
-    at Module.load (node:internal/modules/cjs/loader:1203:32)
-    at Module._load (node:internal/modules/cjs/loader:1019:12)
-    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:128:12)
-    at node:internal/main/run_main_module:28:49
+1. Checking Node.js version...
+  ✅ Node.js version: v18.20.8
 
-Node.js v18.20.8
+2. Checking environment variables...
+  ⚠️  NODE_ENV: Not set (may be optional)
+  ⚠️  GOOGLE_CLOUD_PROJECT: Not set (may be optional)
+  ⚠️  BIGQUERY_DATASET_ID: Not set (may be optional)
+
+3. Checking module imports...
+  ✅ fs: Module imported successfully
+  ✅ path: Module imported successfully
+  ✅ crypto: Module imported successfully
+
+4. Checking project modules...
+  ❌ BigQuery Cache: Failed to import - Cannot find module './bigquery/cache'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+  ❌ Payment Functions: Failed to import - Cannot find module './functions/payment'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+  ❌ Snooze Functions: Failed to import - Cannot find module './functions/snooze'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+  ❌ Error Handling: Failed to import - Cannot find module './functions/error_handling'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+  ❌ Security Functions: Failed to import - Cannot find module './functions/security'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+  ❌ Microbatching: Failed to import - Cannot find module './bigquery/microbatching'
+Require stack:
+- /home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/environment_check.js
+
+=== Environment Check Summary ===
+Node.js: ✅ v18.20.8
+Core Modules: ❌ All imported
+Project Modules: ❌ All imported
+
+⚠️  Some modules failed to import. Check the errors above.
 Error: Process completed with exit code 1.

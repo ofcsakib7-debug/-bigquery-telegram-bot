@@ -29,27 +29,32 @@ describe('Security Functionality', () => {
     // Clear all mocks
     jest.clearAllMocks();
     
-    // Set up KMS client mocks
-    mockKmsClient.cryptoKeyPath.mockReturnValue('projects/test-project/locations/global/keyRings/test-ring/cryptoKeys/test-key');
+    // Set up environment variable for testing
+    process.env.GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT || 'test-project';
+    
+    // Set up KMS client mocks with values that match the implementation
+    const projectId = process.env.GOOGLE_CLOUD_PROJECT;
+    mockKmsClient.cryptoKeyPath.mockReturnValue(`projects/${projectId}/locations/global/keyRings/business-operations/cryptoKeys/sensitive-data-key`);
     mockKmsClient.encrypt.mockResolvedValue([{ ciphertext: Buffer.from('encrypted-data') }]);
     mockKmsClient.decrypt.mockResolvedValue([{ plaintext: Buffer.from('decrypted-data') }]);
   });
 
   describe('encryptSensitiveData', () => {
     test('should encrypt data using KMS', async () => {
+      const projectId = process.env.GOOGLE_CLOUD_PROJECT || 'test-project';
       const plaintext = 'sensitive-information';
       const result = await encryptSensitiveData(plaintext);
 
       // Verify KMS methods were called correctly
       expect(mockKmsClient.cryptoKeyPath).toHaveBeenCalledWith(
-        'test-project', 
+        projectId, 
         'global', 
-        'test-ring', 
-        'test-key'
+        'business-operations', 
+        'sensitive-data-key'
       );
       
       expect(mockKmsClient.encrypt).toHaveBeenCalledWith({
-        name: 'projects/test-project/locations/global/keyRings/test-ring/cryptoKeys/test-key',
+        name: `projects/${projectId}/locations/global/keyRings/business-operations/cryptoKeys/sensitive-data-key`,
         plaintext: Buffer.from(plaintext)
       });
 
@@ -67,19 +72,20 @@ describe('Security Functionality', () => {
 
   describe('decryptSensitiveData', () => {
     test('should decrypt data using KMS', async () => {
+      const projectId = process.env.GOOGLE_CLOUD_PROJECT || 'test-project';
       const ciphertext = 'ZW5jcnlwdGVkLWRhdGE=';
       const result = await decryptSensitiveData(ciphertext);
 
       // Verify KMS methods were called correctly
       expect(mockKmsClient.cryptoKeyPath).toHaveBeenCalledWith(
-        'test-project', 
+        projectId, 
         'global', 
-        'test-ring', 
-        'test-key'
+        'business-operations', 
+        'sensitive-data-key'
       );
       
       expect(mockKmsClient.decrypt).toHaveBeenCalledWith({
-        name: 'projects/test-project/locations/global/keyRings/test-ring/cryptoKeys/test-key',
+        name: `projects/${projectId}/locations/global/keyRings/business-operations/cryptoKeys/sensitive-data-key`,
         ciphertext: Buffer.from(ciphertext, 'base64')
       });
 

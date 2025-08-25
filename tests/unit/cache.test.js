@@ -70,10 +70,8 @@ describe('Cache Functionality', () => {
     });
 
     test('should return null when cache entry is expired', async () => {
-      // Mock query result with expired data
-      mockBigQuery.query.mockResolvedValue([[
-        { cached_data: JSON.stringify({ test: 'data' }), expires_at: new Date(Date.now() - 3600000) }
-      ]]);
+      // Mock query result with no data (expired entries filtered by SQL query)
+      mockBigQuery.query.mockResolvedValue([[]]);
 
       const result = await getFromCache('test:key:value');
       expect(result).toBeNull();

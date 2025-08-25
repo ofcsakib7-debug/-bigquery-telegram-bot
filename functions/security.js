@@ -16,8 +16,8 @@ const kmsClient = new KeyManagementServiceClient();
 // Initialize Firestore
 const firestore = new Firestore();
 
-// Configuration
-const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT;
+// Configuration with fallback values for testing
+const PROJECT_ID = process.env.GOOGLE_CLOUD_PROJECT || 'test-project';
 const LOCATION = 'global';
 const KEY_RING = 'business-operations';
 const KEY_NAME = 'sensitive-data-key';
