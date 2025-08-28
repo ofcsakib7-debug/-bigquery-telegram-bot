@@ -13,8 +13,7 @@
     "test:design6-design7": "node tests/test_design6_design7.js",
     "verify": "node verify_system.js",
     "start": "node index.js",
-    "init": "node init.js",
-    "test:e2e": "echo \"No e2e tests configured\""
+    "init": "node init.js"
   },
   "keywords": [
     "telegram",
