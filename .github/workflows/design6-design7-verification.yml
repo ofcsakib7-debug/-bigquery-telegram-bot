@@ -1,0 +1,113 @@
+# .github/workflows/design6-design7-verification.yml
+name: Verify Design 6 & 7 Components
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  verify-design6-design7:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Verify Design 6 module imports
+      run: |
+        echo "=== Testing Design 6 Module Imports ==="
+        node -e "
+          try {
+            const { validate_search_query } = require('./functions/search_validation');
+            console.log('✅ Search validation module imports successfully');
+            
+            // Test the function
+            const result = validate_search_query('user123', 'e cm');
+            console.log('✅ Function execution result:', result.status);
+          } catch (error) {
+            console.log('❌ Search validation module error:', error.message);
+            process.exit(1);
+          }
+        "
+      
+    - name: Verify Design 7 module imports
+      run: |
+        echo "=== Testing Design 7 Module Imports ==="
+        node -e "
+          try {
+            const { detectLogicalError } = require('./functions/error_detection');
+            console.log('✅ Error detection module imports successfully');
+            
+            // Test the function
+            const result = detectLogicalError({
+              department: 'FINANCE',
+              payment_date: new Date('2023-01-15'),
+              transaction_date: new Date('2023-01-10'),
+              amount: 1000
+            });
+            console.log('✅ Function execution result:', result.hasError ? 'ERROR DETECTED' : 'NO ERROR');
+          } catch (error) {
+            console.log('❌ Error detection module error:', error.message);
+            process.exit(1);
+          }
+        "
+        
+    - name: Run integration verification
+      run: |
+        echo "=== Running Integration Verification ==="
+        node -e "
+          try {
+            // Import both modules
+            const { validate_search_query } = require('./functions/search_validation');
+            const { detectLogicalError } = require('./functions/error_detection');
+            console.log('✅ Both modules imported successfully');
+            
+            // Test integration
+            const searchResult = validate_search_query('user123', 'finance report');
+            console.log('Search validation result:', searchResult.status);
+            
+            const transactionResult = detectLogicalError({
+              department: 'FINANCE',
+              payment_date: new Date('2023-01-15'),
+              transaction_date: new Date('2023-01-10'),
+              amount: 1000
+            });
+            console.log('Transaction error detection result:', transactionResult.hasError ? 'ERROR DETECTED' : 'NO ERROR');
+            
+            console.log('✅ Integration verification completed successfully');
+          } catch (error) {
+            console.log('❌ Integration verification failed:', error.message);
+            process.exit(1);
+          }
+        "
+        
+    - name: Generate verification report
+      if: always()
+      run: |
+        echo "=== Design 6 & 7 Verification Summary ==="
+        echo "Job status: ${{ job.status }}"
+        echo "Node version: ${{ matrix.node-version }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        
+    - name: Upload verification results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: design6-design7-verification-results
+        path: |
+          *.log

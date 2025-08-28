@@ -38,6 +38,14 @@ jobs:
       run: npm run test:integration
       continue-on-error: true
       
+    - name: Run Design 6 tests
+      run: npm run test:design6
+      continue-on-error: true
+      
+    - name: Run Design 7 tests
+      run: npm run test:design7
+      continue-on-error: true
+      
     - name: Run CI/CD verification
       run: npm run test:verification
       continue-on-error: true

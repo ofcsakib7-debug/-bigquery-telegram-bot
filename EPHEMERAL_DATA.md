@@ -1,0 +1,5 @@
+# EPHEMERAL DATA (DISCARD IMMEDIATELY)
+- Previous implementation steps (automatically deleted)
+- Redundant information (automatically deleted)
+- Completed development details (automatically deleted)
+- Loop detection metrics

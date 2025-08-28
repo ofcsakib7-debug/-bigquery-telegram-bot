@@ -1,63 +1,139 @@
-// Test GitHub Actions setup
-console.log('=== GitHub Actions Setup Verification ===\n');
+// tests/github_actions_test.js - GitHub Actions test for Design 6 & 7
+console.log('=== GitHub Actions Test for Design 6 & Design 7 ===\n');
 
 const fs = require('fs');
 const path = require('path');
 
-// Check if GitHub Actions workflow files exist
-console.log('1. Checking GitHub Actions workflow files...\n');
+// Check if required files exist
+console.log('1. Checking required files...\n');
 
-const workflowFiles = [
-  '.github/workflows/test.yml',
-  '.github/workflows/verify-system.yml'
+const requiredFiles = [
+  'functions/search_validation.js',
+  'functions/error_detection.js',
+  'tests/unit/search_validation.test.js',
+  'tests/unit/error_detection.test.js'
 ];
 
-let allWorkflowsExist = true;
-workflowFiles.forEach(file => {
+let allFilesExist = true;
+requiredFiles.forEach(file => {
   const fullPath = path.join(__dirname, '..', file);
   if (fs.existsSync(fullPath)) {
     console.log(`  ✅ ${file} exists`);
   } else {
     console.log(`  ❌ ${file} is missing`);
-    allWorkflowsExist = false;
+    allFilesExist = false;
   }
 });
 
-// Check if system verification script exists
-console.log('\n2. Checking system verification script...\n');
+// Test module imports
+console.log('\n2. Testing module imports...\n');
 
-const verificationScript = 'tests/system_verification.js';
-const verificationPath = path.join(__dirname, '..', verificationScript);
-if (fs.existsSync(verificationPath)) {
-  console.log(`  ✅ ${verificationScript} exists`);
-} else {
-  console.log(`  ❌ ${verificationScript} is missing`);
+function testImport(modulePath, moduleName) {
+  try {
+    require(modulePath);
+    console.log(`  ✅ ${moduleName} module imports successfully`);
+    return true;
+  } catch (error) {
+    console.log(`  ❌ ${moduleName} module import failed: ${error.message}`);
+    return false;
+  }
 }
 
-// Check package.json scripts
-console.log('\n3. Checking package.json scripts for GitHub Actions...\n');
+const importTests = [
+  ['./functions/search_validation.js', 'Search Validation'],
+  ['./functions/error_detection.js', 'Error Detection']
+];
 
-try {
-  const packageJson = require('../package.json');
-  const requiredScripts = ['test:unit', 'test:integration', 'test:verification'];
-  
-  requiredScripts.forEach(script => {
-    if (packageJson.scripts && packageJson.scripts[script]) {
-      console.log(`  ✅ ${script} script exists`);
+let allImportsSuccessful = true;
+importTests.forEach(([modulePath, moduleName]) => {
+  if (!testImport(modulePath, moduleName)) {
+    allImportsSuccessful = false;
+  }
+});
+
+// Test function accessibility
+console.log('\n3. Testing function accessibility...\n');
+
+function testFunctionAccess(modulePath, functionName, moduleName) {
+  try {
+    const module = require(modulePath);
+    if (typeof module[functionName] === 'function') {
+      console.log(`  ✅ ${moduleName}.${functionName} function is accessible`);
+      return true;
     } else {
-      console.log(`  ❌ ${script} script is missing`);
+      console.log(`  ❌ ${moduleName}.${functionName} function is not accessible`);
+      return false;
     }
-  });
-} catch (error) {
-  console.log('  ❌ Error reading package.json:', error.message);
+  } catch (error) {
+    console.log(`  ❌ ${moduleName}.${functionName} accessibility test failed: ${error.message}`);
+    return false;
+  }
 }
+
+const functionTests = [
+  ['./functions/search_validation.js', 'validate_search_query', 'Search Validation'],
+  ['./functions/error_detection.js', 'detectLogicalError', 'Error Detection']
+];
+
+let allFunctionsAccessible = true;
+functionTests.forEach(([modulePath, functionName, moduleName]) => {
+  if (!testFunctionAccess(modulePath, functionName, moduleName)) {
+    allFunctionsAccessible = false;
+  }
+});
+
+// Test function execution
+console.log('\n4. Testing function execution...\n');
+
+function testFunctionExecution(modulePath, functionName, args, moduleName) {
+  try {
+    const module = require(modulePath);
+    const result = module[functionName](...args);
+    console.log(`  ✅ ${moduleName}.${functionName} executed successfully`);
+    return true;
+  } catch (error) {
+    console.log(`  ❌ ${moduleName}.${functionName} execution failed: ${error.message}`);
+    return false;
+  }
+}
+
+const executionTests = [
+  ['./functions/search_validation.js', 'validate_search_query', ['user123', 'e cm'], 'Search Validation'],
+  ['./functions/error_detection.js', 'detectLogicalError', [{
+    department: 'FINANCE',
+    payment_date: new Date('2023-01-15'),
+    transaction_date: new Date('2023-01-10'),
+    amount: 1000
+  }], 'Error Detection']
+];
+
+let allFunctionsExecute = true;
+executionTests.forEach(([modulePath, functionName, args, moduleName]) => {
+  if (!testFunctionExecution(modulePath, functionName, args, moduleName)) {
+    allFunctionsExecute = false;
+  }
+});
 
 // Summary
-console.log('\n=== GitHub Actions Setup Summary ===');
-console.log(`Workflow files: ${allWorkflowsExist ? '✅ READY' : '❌ INCOMPLETE'}`);
-console.log('GitHub Actions setup is ready for testing!');
-console.log('\nTo use this setup:');
-console.log('1. Push your code to a GitHub repository');
-console.log('2. Enable GitHub Actions in the repository settings');
-console.log('3. Monitor the Actions tab for test results');
-console.log('4. Check the detailed logs for any errors');
+console.log('\n=== GitHub Actions Test Summary ===');
+
+const summary = {
+  fileStructure: allFilesExist ? '✅ PASS' : '❌ FAIL',
+  moduleImports: allImportsSuccessful ? '✅ PASS' : '❌ FAIL',
+  functionAccessibility: allFunctionsAccessible ? '✅ PASS' : '❌ FAIL',
+  functionExecution: allFunctionsExecute ? '✅ PASS' : '❌ FAIL'
+};
+
+Object.entries(summary).forEach(([test, result]) => {
+  console.log(`  ${test}: ${result}`);
+});
+
+const overallSuccess = Object.values(summary).every(result => result.includes('✅'));
+console.log(`\nOverall GitHub Actions Test Status: ${overallSuccess ? '✅ READY' : '❌ ISSUES FOUND'}`);
+
+if (overallSuccess) {
+  console.log('\n🎉 GitHub Actions test passed! Design 6 & Design 7 are ready for CI/CD.');
+} else {
+  console.log('\n🔧 Some tests failed. Please check the output above for details.');
+  process.exit(1);
+}

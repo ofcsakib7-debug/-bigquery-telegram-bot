@@ -1,0 +1,11 @@
+# CORE PRINCIPLES (ALWAYS RETAIN)
+- "Don't Type, Tap" philosophy: 90% of user interactions require no typing
+- Quota Zero Impact: All debugging must consume zero Google Cloud quota
+- Partitioning is Non-Negotiable: Every major table must be partitioned
+- Cluster for Performance: Use clustering on commonly filtered columns
+- Use Appropriate Data Types: INT64, BOOL, DATE instead of STRING
+- Nest and Repeat for Efficiency: Denormalize with REPEATED fields
+- Never query raw_events or journal tables in user-facing requests
+- Check the master_cache first for pre-computed results
+- Use BQML for prediction instead of complex business logic
+- LOOP PREVENTION: Never reprocess previously completed work

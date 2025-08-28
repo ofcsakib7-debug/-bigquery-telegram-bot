@@ -2,9 +2,9 @@
 # Design: Deployment
 # Phase: 1
 # Component: deployment_guide
-# Status: IN_PROGRESS
-# Last Modified: 2025-08-24 19:15 UTC
-# Next Step: Implement deployment scripts
+# Status: COMPLETED
+# Last Modified: 2025-08-28 14:00 UTC
+# Next Step: System deployment
 # =============================================
 
 # BigQuery Telegram Bot System - Deployment Guide
@@ -136,7 +136,28 @@ Before deploying the system, ensure you have:
      --timeout 540s
    ```
 
-3. **Deploy scheduled functions**:
+3. **Deploy validation and auto-correction functions**:
+   ```bash
+   gcloud functions deploy integrateValidationAndCorrection \
+     --runtime nodejs18 \
+     --trigger-http \
+     --allow-unauthenticated \
+     --entry-point integrateValidationAndCorrection \
+     --source functions/ \
+     --memory 128MB \
+     --timeout 540s
+     
+   gcloud functions deploy processSearchQueryWithValidation \
+     --runtime nodejs18 \
+     --trigger-http \
+     --allow-unauthenticated \
+     --entry-point processSearchQueryWithValidation \
+     --source functions/ \
+     --memory 128MB \
+     --timeout 540s
+   ```
+
+4. **Deploy scheduled functions**:
    ```bash
    gcloud functions deploy cleanupCache \
      --runtime nodejs18 \
@@ -243,6 +264,10 @@ STORAGE_BUCKET_NAME=payment-evidence
 
 # Region Configuration
 REGION=us-central1
+
+# Validation System Configuration
+VALIDATION_CACHE_TTL=3600
+TYPO_CORRECTION_CACHE_TTL=7200
 ```
 
 ## Monitoring and Maintenance
@@ -271,6 +296,19 @@ The system includes automatic quota monitoring. Set up alerts by:
    gcloud logging read "resource.type=\"cloud_scheduler_job\"" --limit 50
    ```
 
+### Validation System Monitoring
+
+1. **Monitor validation performance**:
+   - Track validation success rates
+   - Monitor typo correction accuracy
+   - Review heuristic pattern predictions
+   - Analyze department-specific validation metrics
+
+2. **Validation alerting**:
+   - Set up alerts for high error rates
+   - Monitor cache hit rates for validation components
+   - Track BQML model performance metrics
+
 ## Troubleshooting
 
 ### Common Issues
@@ -289,6 +327,11 @@ The system includes automatic quota monitoring. Set up alerts by:
    - Check monitoring dashboards
    - Review usage patterns
    - Optimize queries and caching
+
+4. **Validation errors**:
+   - Check validation function logs
+   - Review typo correction cache performance
+   - Verify BQML model status
 
 ### Debugging Steps
 
@@ -309,6 +352,11 @@ The system includes automatic quota monitoring. Set up alerts by:
    bq show PROJECT_ID:DATASET_ID.TABLE_ID
    ```
 
+4. **Test validation system**:
+   ```bash
+   npm run test:validation
+   ```
+
 ## Security Considerations
 
 1. **Never commit secrets** to version control
@@ -316,6 +364,7 @@ The system includes automatic quota monitoring. Set up alerts by:
 3. **Enable Cloud Audit Logs** for security monitoring
 4. **Regularly rotate** service account keys
 5. **Review IAM permissions** periodically
+6. **Validate all user inputs** through the validation system
 
 ## Backup and Recovery
 
@@ -346,6 +395,11 @@ The system includes automatic quota monitoring. Set up alerts by:
    - Monitor cache hit rates
    - Adjust TTL values based on data volatility
    - Pre-warm caches for peak usage times
+
+4. **Validation system optimization**:
+   - Monitor validation layer performance
+   - Optimize typo correction cache
+   - Review BQML model predictions
 
 ## Scaling Considerations
 

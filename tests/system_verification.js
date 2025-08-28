@@ -21,9 +21,12 @@ function safeImport(modulePath, moduleName) {
 const paymentResult = safeImport('./functions/payment', 'Payment');
 const snoozeResult = safeImport('./functions/snooze', 'Snooze');
 const cacheResult = safeImport('./bigquery/cache', 'Cache');
+const searchValidationResult = safeImport('./functions/search_validation', 'Search Validation');
+const errorDetectionResult = safeImport('./functions/error_detection', 'Error Detection');
 
 // Check if all imports were successful
-const allImportsSuccessful = paymentResult.success && snoozeResult.success && cacheResult.success;
+const allImportsSuccessful = paymentResult.success && snoozeResult.success && cacheResult.success && 
+                            searchValidationResult.success && errorDetectionResult.success;
 console.log(`\n  Import Summary: ${allImportsSuccessful ? '✅ All modules imported successfully' : '❌ Some modules failed to import'}\n`);
 
 // Test function accessibility with detailed error logging
@@ -57,6 +60,8 @@ function testFunctionAccessibility(moduleResult, moduleName, functionName) {
 const validateChallanNumbersResult = testFunctionAccessibility(paymentResult, 'Payment', 'validateChallanNumbers');
 const generateCacheKeyResult = testFunctionAccessibility(cacheResult, 'Cache', 'generateCacheKey');
 const calculateSnoozeUntilResult = testFunctionAccessibility(snoozeResult, 'Snooze', 'calculateSnoozeUntil');
+const validateSearchQueryResult = testFunctionAccessibility(searchValidationResult, 'Search Validation', 'validate_search_query');
+const detectLogicalErrorResult = testFunctionAccessibility(errorDetectionResult, 'Error Detection', 'detectLogicalError');
 
 // Test function execution with detailed error logging
 console.log('\n3. Testing Function Execution with Detailed Error Logging...\n');
@@ -102,6 +107,20 @@ if (calculateSnoozeUntilResult.success) {
   testFunctionExecution(calculateSnoozeUntilResult, 'calculateSnoozeUntil', ['1h'], 'object');
 }
 
+if (validateSearchQueryResult.success) {
+  testFunctionExecution(validateSearchQueryResult, 'validate_search_query', ['user123', 'e cm'], 'object');
+  testFunctionExecution(validateSearchQueryResult, 'validate_search_query', ['user123', 'invalid@query'], 'object');
+}
+
+if (detectLogicalErrorResult.success) {
+  testFunctionExecution(detectLogicalErrorResult, 'detectLogicalError', [{
+    department: 'FINANCE',
+    payment_date: new Date('2023-01-05'),
+    transaction_date: new Date('2023-01-10'),
+    amount: 1000
+  }], 'object');
+}
+
 // Test file structure
 console.log('\n4. Testing File Structure...\n');
 
@@ -128,6 +147,8 @@ const requiredFiles = [
   ['functions/payment.js', 'Payment module'],
   ['functions/snooze.js', 'Snooze module'],
   ['bigquery/cache.js', 'Cache module'],
+  ['functions/search_validation.js', 'Search Validation module'],
+  ['functions/error_detection.js', 'Error Detection module'],
   ['cloudbuild.yaml', 'Cloud Build configuration'],
   ['package.json', 'Package configuration'],
   ['README.md', 'Documentation']
@@ -179,7 +200,9 @@ const summary = {
   functionAccessibility: (
     validateChallanNumbersResult.success && 
     generateCacheKeyResult.success && 
-    calculateSnoozeUntilResult.success
+    calculateSnoozeUntilResult.success &&
+    validateSearchQueryResult.success &&
+    detectLogicalErrorResult.success
   ) ? '✅ PASS' : '❌ FAIL',
   fileStructure: allFilesExist ? '✅ PASS' : '❌ FAIL',
   packageJson: packageJsonResult.success && packageJsonResult.allScriptsPresent ? '✅ PASS' : '❌ FAIL'

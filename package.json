@@ -8,6 +8,9 @@
     "test:unit": "jest tests/unit",
     "test:integration": "jest tests/integration",
     "test:verification": "node tests/system_verification.js",
+    "test:design6": "node tests/unit/search_validation.test.js",
+    "test:design7": "node tests/unit/error_detection.test.js",
+    "test:design6-design7": "node tests/test_design6_design7.js",
     "verify": "node verify_system.js",
     "start": "node index.js",
     "init": "node init.js"

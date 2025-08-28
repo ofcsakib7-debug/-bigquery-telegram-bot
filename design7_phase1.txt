@@ -1,0 +1,388 @@
+Design 7, Phase 1: Logical Error Detection System - Foundation Architecture Prompt for Qwen Coder
+Create the foundational database architecture for a 4-layer logical error detection system that operates entirely within Google Cloud free tier limits while preventing department-specific logical inconsistencies. Implement exactly as specified with no interpretation or deviation.
+Core Logical Error Detection Requirements
+1. Logical Error Patterns Table
+Table Name: logical_error_patterns
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.logical_error_patterns` (
+  pattern_id STRING NOT NULL,  -- Format: PATTERN-{YYYYMMDD}-{3-random}
+  department_id STRING NOT NULL,  -- Values: FINANCE, INVENTORY, SALES, SERVICE, MARKETING, HR, MANAGEMENT
+  error_type STRING NOT NULL,  -- Values: DATE_LOGIC, AMOUNT_LOGIC, STOCK_LOGIC, REFERENCE_LOGIC
+  pattern_name STRING NOT NULL,  -- Human-readable pattern name
+  description STRING NOT NULL,  -- Detailed description of the error pattern
+  validation_rule STRING NOT NULL,  -- The SQL rule to validate this pattern
+  severity_level INT64 NOT NULL,  -- 1-5 scale (5 = most severe)
+  usage_count INT64 DEFAULT 0,
+  last_triggered TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY department_id, error_type, severity_level
+OPTIONS(
+  description="Department-specific logical error patterns with validation rules for proactive error prevention"
+);
+Implementation Rules:
+•	pattern_id must follow exact format: PATTERN-20231110-ABC
+•	department_id must be one of the 7 specified values only
+•	error_type must be one of the 4 specified values only
+•	severity_level must be between 1 and 5 (5 = most severe)
+•	created_at and updated_at must use UTC timezone
+•	Implement data expiration: 36 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+Department-Specific Pattern Requirements:
+•	FINANCE: Must include date logic patterns (payment_date < transaction_date)
+•	INVENTORY: Must include stock and date logic patterns (delivery_date < manufacturing_date)
+•	SALES: Must include customer and pricing logic patterns (sale_date < customer_creation_date)
+•	SERVICE: Must include technician and machine logic patterns (service_date < delivery_date)
+•	MARKETING: Must include customer interaction and pricing logic patterns
+•	HR: Must include attendance and payroll logic patterns
+•	MANAGEMENT: Must include financial metric logic patterns
+2. Error Detection Events Table
+Table Name: error_detection_events
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.error_detection_events` (
+  event_id STRING NOT NULL,  -- Format: ERR-{YYYYMMDD}-{3-random}
+  user_id STRING NOT NULL,  -- Telegram user ID
+  department_id STRING NOT NULL,  -- Values: FINANCE, INVENTORY, etc.
+  transaction_id STRING NOT NULL,  -- Reference to the transaction being validated
+  error_type STRING NOT NULL,  -- Values: DATE_LOGIC, AMOUNT_LOGIC, etc.
+  error_pattern_id STRING NOT NULL,  -- Reference to logical_error_patterns.pattern_id
+  error_message STRING NOT NULL,  -- User-friendly error message
+  suggested_corrections ARRAY<STRING> NOT NULL,  -- Actionable suggestions for fixing
+  detection_layer INT64 NOT NULL,  -- 1-4 (which layer detected the error)
+  confidence_score FLOAT64 NOT NULL,  -- 0.0-1.0 scale (1.0 = highest confidence)
+  resolved BOOL DEFAULT FALSE,  -- TRUE if user resolved the error
+  resolution_timestamp TIMESTAMP,
+  timestamp TIMESTAMP NOT NULL
+)
+PARTITION BY DATE(timestamp)
+CLUSTER BY department_id, error_type, detection_layer
+OPTIONS(
+  description="Tracking of all logical error detections for analysis and model training"
+);
+Implementation Rules:
+•	event_id must follow exact format: ERR-20231110-ABC
+•	detection_layer must be between 1 and 4 (1 = first line of defense)
+•	confidence_score must be between 0.0 and 1.0 (1.0 = highest confidence)
+•	timestamp must use UTC timezone
+•	Implement data expiration: 12 months after timestamp
+•	Partitioning must be on DATE(timestamp), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+3. BQML Training Data Infrastructure
+Table Name: bqml_training_error_detection
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.bqml_training_error_detection` (
+  user_id STRING NOT NULL,
+  department_id STRING NOT NULL,
+  transaction_type STRING NOT NULL,  -- Values: PAYMENT, DELIVERY, SALE, SERVICE, etc.
+  error_type STRING NOT NULL,  -- Values: DATE_LOGIC, AMOUNT_LOGIC, etc.
+  error_pattern_id STRING NOT NULL,
+  detection_layer INT64 NOT NULL,
+  confidence_score FLOAT64 NOT NULL,
+  hour_of_day STRING NOT NULL,  -- Format: "00"-"23"
+  day_of_week STRING NOT NULL,  -- Values: MONDAY, TUESDAY, ..., SUNDAY
+  user_role STRING NOT NULL,
+  resolved BOOL NOT NULL,
+  training_date DATE NOT NULL
+)
+PARTITION BY training_date
+CLUSTER BY department_id, error_type, detection_layer
+OPTIONS(
+  description="Pre-aggregated error detection data for BQML model training"
+);
+Implementation Rules:
+•	hour_of_day must be two-digit string from "00" to "23"
+•	day_of_week must be one of 7 specified values only
+•	detection_layer must be between 1 and 4
+•	training_date must be set to the date of aggregation
+•	Implement automatic data expiration: 90 days after training_date
+•	Must be rebuilt daily from error_detection_events
+•	Partitioning must be on training_date, NOT timestamp
+4. Error Pattern Recognition Model
+Model Name: error_pattern_model
+Exact Implementation Requirements:
+sql
+-- Create training data table
+CREATE OR REPLACE TABLE `project.dataset.bqml_training_error_detection` AS
+SELECT
+  e.user_id,
+  e.department_id,
+  t.transaction_type,
+  e.error_type,
+  e.error_pattern_id,
+  e.detection_layer,
+  e.confidence_score,
+  FORMAT_TIMESTAMP('%H', e.timestamp) AS hour_of_day,
+  FORMAT_TIMESTAMP('%A', e.timestamp) AS day_of_week,
+  u.role AS user_role,
+  e.resolved,
+  CURRENT_DATE() AS training_date
+FROM `project.dataset.error_detection_events` e
+JOIN `project.dataset.user_profiles` u
+  ON e.user_id = u.user_id
+LEFT JOIN `project.dataset.transaction_metadata` t
+  ON e.transaction_id = t.transaction_id
+WHERE 
+  DATE(e.timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 180 DAY);
+
+-- Create the error pattern recognition model
+CREATE OR REPLACE MODEL `project.dataset.error_pattern_model`
+OPTIONS(
+  model_type = 'boosted_tree_classifier',
+  input_label_cols = ['is_high_severity']
+) AS
+SELECT
+  *,
+  IF(confidence_score > 0.9, TRUE, FALSE) AS is_high_severity
+FROM `project.dataset.bqml_training_error_detection`;
+Critical Implementation Details:
+•	Must be trained daily during off-peak hours (2AM-4AM Bangladesh time)
+•	Must use boosted tree classifier for pattern recognition
+•	Must include department_id as a categorical feature
+•	Must include hour_of_day and day_of_week as features
+•	Must include user_role as a feature
+•	Must only use data from the last 180 days
+•	Must exclude events with resolved = TRUE
+•	Must validate model performance before deployment
+5. Department-Specific Error Cache Tables
+Table Name Pattern: {department}_error_cache
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.{department}_error_cache` (
+  cache_key STRING NOT NULL,  -- Format: "{dept}:{transaction_id}:{user_id}"
+  error_patterns ARRAY<STRUCT<
+    pattern_id STRING,
+    error_type STRING,
+    error_message STRING,
+    suggested_corrections ARRAY<STRING>,
+    confidence_score FLOAT64
+  >> NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  hit_count INT64 DEFAULT 0,
+  last_accessed TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(expires_at)
+CLUSTER BY user_id, transaction_type
+OPTIONS(
+  description="Department-specific error pattern cache with user context"
+);
+Implementation Rules:
+•	{department} must be lowercase version of department_id (e.g., "finance")
+•	cache_key must follow exact format: "finance:PAY-2023-123:12345"
+•	expires_at must be 15 minutes from created_at for Layer 3 results
+•	hit_count must increment on each access
+•	last_accessed must update on each access
+•	Implement automatic cleanup of expired records
+•	Partitioning must be on DATE(expires_at), NOT created_at
+6. Scheduled Reconciliation Table
+Table Name: logical_errors_daily
+Exact Schema Requirements:
+CREATE TABLE `project.dataset.logical_errors_daily` (
+  error_id STRING NOT NULL,  -- Format: ERR-DAILY-{YYYYMMDD}-{3-random}
+  error_type STRING NOT NULL,  -- Values: DATE_LOGIC, AMOUNT_LOGIC, etc.
+  description STRING NOT NULL,
+  transaction_id STRING NOT NULL,
+  transaction_date TIMESTAMP NOT NULL,
+  related_date TIMESTAMP,  -- Secondary date for comparison (e.g., payment_date)
+  amount FLOAT64,
+  user_id STRING NOT NULL,
+  confidence_score FLOAT64 NOT NULL,  -- 0.0-1.0 scale
+  detection_date DATE NOT NULL
+)
+PARTITION BY detection_date
+CLUSTER BY error_type, confidence_score
+OPTIONS(
+  description="Daily reconciliation of potential logical errors detected in background"
+);
+Implementation Rules:
+•	error_id must follow exact format: ERR-DAILY-20231110-ABC
+•	confidence_score must be between 0.0 and 1.0 (1.0 = highest confidence)
+•	detection_date must use Bangladesh timezone (Asia/Dhaka)
+•	Implement data expiration: 90 days after detection_date
+•	Partitioning must be on detection_date, NOT _PARTITIONTIME
+•	Clustering must include error_type as first field
+•	Only include errors with confidence_score > 0.85
+•	Only process data from previous day
+7. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+•	NEVER query raw error_detection_events or logical_error_patterns in user-facing requests
+•	ALWAYS filter by partitioning column first in all queries
+•	ALWAYS include at least one clustering column in WHERE clause
+•	Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+•	For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+•	NEVER use SELECT * - always specify exact columns needed
+B. Layered Validation Rules
+•	Layer 1 (Application Logic):
+•	Must complete within 50ms
+•	Must use zero BigQuery quota
+•	Must validate date logic first (most common error)
+•	Must validate amount logic second
+•	Must validate reference logic third
+•	Layer 2 (Contextual Validation):
+•	Must complete within 100ms
+•	Must use only Firestore reads (50K free tier daily)
+•	Must validate department-specific context
+•	Must check machine manufacturing dates
+•	Must check technician availability
+•	Layer 3 (BQML Anomaly Detection):
+•	Must complete within 200ms
+•	Must check cache first (90% hit rate target)
+•	Must use department-specific BQML models
+•	Must only query pre-aggregated tables
+•	Must limit to 100MB data scan per query
+•	Layer 4 (Scheduled Reconciliation):
+•	Must run during off-peak hours (2AM-4AM Bangladesh time)
+•	Must only process previous day's data
+•	Must filter by partition column first
+•	Must use --maximum_bytes_billed=100000000 (100MB) flag
+•	Must only include high-confidence errors (confidence_score > 0.85)
+C. Scheduled Query Requirements
+•	Create daily scheduled query for bqml_training_error_detection at 02:00 Asia/Dhaka
+•	Create daily scheduled query for error_pattern_model retraining at 03:00 Asia/Dhaka
+•	Create daily scheduled query for logical_errors_daily at 04:00 Asia/Dhaka
+•	All scheduled queries must have appropriate partition filters
+•	All scheduled queries must have labels for quota monitoring
+•	All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+•	Implement CHECK constraints for all critical fields
+•	pattern_id must follow exact format: PATTERN-YYYYMMDD-ABC
+•	detection_layer must be between 1 and 4 in error_detection_events
+•	confidence_score must be between 0.0 and 1.0 in all tables
+•	error_type must be one of 4 specified values only
+•	Implement automatic data quality checks as scheduled queries
+•	Validate transaction_id format using regex: /^[A-Z]+-\d{4}-\d+$/
+E. Data Expiration Policies
+•	logical_error_patterns: 36 months
+•	error_detection_events: 12 months
+•	bqml_training_error_detection: 90 days
+•	department error caches: 15 minutes (standard), 2 hours (frequently accessed)
+•	logical_errors_daily: 90 days
+8. Department-Specific Implementation Requirements
+A. Department-Specific Error Patterns
+•	FINANCE: Must include payment date before transaction date pattern
+sql
+SELECT
+  'DATE_LOGIC' AS error_type,
+  'PAYMENT_DATE_BEFORE_TRANSACTION' AS pattern_name,
+  'Payment date cannot be before transaction date',
+  'payment_date < transaction_date',
+  5 AS severity_level
+•	INVENTORY: Must include delivery date before manufacturing date pattern
+sql
+SELECT
+  'DATE_LOGIC' AS error_type,
+  'DELIVERY_DATE_BEFORE_MANUFACTURING' AS pattern_name,
+  'Delivery date cannot be before manufacturing date',
+  'delivery_date < manufacturing_date',
+  5 AS severity_level
+•	SALES: Must include sale date before customer creation date pattern
+sql
+SELECT
+  'DATE_LOGIC' AS error_type,
+  'SALE_DATE_BEFORE_CUSTOMER_CREATION' AS pattern_name,
+  'Sale date cannot be before customer creation date',
+  'sale_date < customer_creation_date',
+  4 AS severity_level
+B. Department-Specific Error Detection Logic
+•	FINANCE: Prioritize date logic and amount validation
+sql
+-- Layer 1 validation for Finance department
+IF transaction_data.payment_date < transaction_data.transaction_date THEN
+  RETURN {
+    'valid': FALSE,
+    'error_type': 'DATE_LOGIC',
+    'message': 'Payment date cannot be before transaction date',
+    'suggestions': [
+      'Did you mean payment date: ' || transaction_data.transaction_date,
+      'Check if dates are swapped'
+    ]
+  }
+END IF;
+•	INVENTORY: Prioritize delivery date and stock validation
+sql
+-- Layer 1 validation for Inventory department
+IF transaction_data.delivery_date < transaction_data.manufacturing_date THEN
+  RETURN {
+    'valid': FALSE,
+    'error_type': 'DATE_LOGIC',
+    'message': 'Delivery date cannot be before manufacturing date',
+    'suggestions': [
+      'Manufacturing date: ' || transaction_data.manufacturing_date,
+      'Verify machine ID is correct'
+    ]
+  }
+END IF;
+C. Department-Specific BQML Models
+•	FINANCE: Must include finance-specific error pattern model
+sql
+CREATE OR REPLACE MODEL `project.dataset.finance_error_model`
+OPTIONS(
+  model_type = 'logistic_reg',
+  input_label_cols = ['is_high_severity']
+) AS
+SELECT
+  transaction_date,
+  payment_date,
+  amount,
+  branch_cash_balance,
+  CASE 
+    WHEN payment_date < transaction_date THEN 1 
+    ELSE 0 
+  END AS is_high_severity
+FROM `project.dataset.payment_receipts`
+WHERE DATE(timestamp) >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);
+•	INVENTORY: Must include inventory-specific error pattern model
+sql
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+⌄
+CREATE OR REPLACE MODEL `project.dataset.inventory_error_model`
+OPTIONS(
+  model_type = 'logistic_reg',
+  input_label_cols = ['is_high_severity']
+) AS
+SELECT
+  manufacturing_date,
+  delivery_date,
+  service_date,
+  quantity,
+  stock_count,
+  CASE 
+    WHEN delivery_date < manufacturing_date THEN 1 
+    ELSE 0 
+  END AS is_high_severity
+FROM `project.dataset.machine_inventory_transactions`
+WHERE DATE(transaction_date) >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY);
+Critical Implementation Sequence
+1.	First, create the logical_error_patterns table with exact partitioning and clustering
+2.	Then, create the error_detection_events table with exact partitioning and clustering
+3.	Next, create the bqml_training_error_detection table structure
+4.	After that, implement the error_pattern_model creation query
+5.	Then, create the department-specific error cache tables
+6.	Finally, create the logical_errors_daily table
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the 4-layer logical error detection system. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+The system must be designed so that 90% of error detection happens in Layer 1 (zero BigQuery quota) and 95% of remaining detection happens in Layer 2 (Firestore only).
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.
+

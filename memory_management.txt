@@ -1,0 +1,611 @@
+Design 5, Phase 1: Token-Efficient Continuation Protocol with Auto-Save, Recovery, Memory Purge & Loop Prevention for Qwen Coder
+Create a continuation protocol that enables Qwen Coder to resume development exactly where it left off after hitting token limits, unexpected interruptions (power outages, network failures), or looping behavior, while implementing strategic memory management to maximize token efficiency. Implement exactly as specified with no interpretation or deviation.
+Core Memory Management Philosophy
+1. Tiered Memory Architecture Implementation
+Tier 1: Core Principles (Always Retain - Max 200 tokens)
+markdown
+# CORE PRINCIPLES (ALWAYS RETAIN)
+- "Don't Type, Tap" philosophy: 90% of user interactions require no typing
+- Quota Zero Impact: All debugging must consume zero Google Cloud quota
+- Partitioning is Non-Negotiable: Every major table must be partitioned
+- Cluster for Performance: Use clustering on commonly filtered columns
+- Use Appropriate Data Types: INT64, BOOL, DATE instead of STRING
+- Nest and Repeat for Efficiency: Denormalize with REPEATED fields
+- Never query raw_events or journal tables in user-facing requests
+- Check the master_cache first for pre-computed results
+- Use BQML for prediction instead of complex business logic
+- LOOP PREVENTION: Never reprocess previously completed work
+Tier 2: Active Context (Session-Specific - Max 300 tokens)
+markdown
+# ACTIVE CONTEXT (SESSION-SPECIFIC)
+- Current Design: [Design Number]
+- Current Phase: [Phase Number]
+- Current Component: [Component Name]
+- Next Implementation Step: [Concise description]
+- Critical Dependencies: [3-5 key dependencies]
+- Token Budget Remaining: [X% of limit]
+- Loop Prevention: [Last processed step]
+Tier 3: Ephemeral Data (Discard Immediately - Max 150 tokens)
+markdown
+# EPHEMERAL DATA (DISCARD IMMEDIATELY)
+- Previous implementation steps (automatically deleted)
+- Redundant information (automatically deleted)
+- Completed development details (automatically deleted)
+- Loop detection metrics
+2. Memory Compression Implementation
+Semantic Summarization Rules:
+•	Replace code snippets with architectural patterns (e.g., "Two-Phase Search Processing" instead of code)
+•	Store "what problem was solved" not "how it was solved"
+•	Convert detailed specifications to pattern names (e.g., "Department-Specific Cache Tables" pattern)
+•	Use standardized abbreviations:
+•	"BQML" instead of "BigQuery Machine Learning"
+•	"MVR" instead of "Minimum Viable Record"
+•	"PH" instead of "Partitioning and Clustering"
+Loop Detection Protocol:
+python
+def detect_looping_behavior():
+    """Detect if development is stuck in a loop"""
+    # 1. Check for repeated processing of same component
+    if current_component in recently_processed_components(3):
+        return {
+            'loop_detected': True,
+            'loop_type': 'COMPONENT_LOOP',
+            'repeated_items': get_repeated_components(3),
+            'loop_count': count_repeated_items(3)
+        }
+    
+    # 2. Check for similar output patterns
+    if has_similar_output_patterns(last_2_outputs):
+        return {
+            'loop_detected': True,
+            'loop_type': 'OUTPUT_SIMILARITY',
+            'similarity_score': calculate_similarity_score(),
+            'loop_count': get_loop_count()
+        }
+    
+    # 3. Check for token usage patterns
+    if token_usage_pattern_indicates_loop():
+        return {
+            'loop_detected': True,
+            'loop_type': 'TOKEN_PATTERN',
+            'token_pattern': get_token_usage_pattern(),
+            'loop_count': get_loop_count()
+        }
+    
+    return {'loop_detected': False}
+Immediate Memory Purge Protocol:
+python
+def apply_immediate_memory_purge():
+    """Immediately delete old unrelated documentation/memory"""
+    # 1. Identify old context (anything not related to current task)
+    old_context = identify_old_context()
+    
+    # 2. Immediately delete old context (no delay)
+    delete_old_context(old_context)
+    
+    # 3. Verify memory usage is within limits
+    verify_memory_usage()
+    
+    # 4. Check for looping behavior
+    loop_detection = detect_looping_behavior()
+    if loop_detection['loop_detected']:
+        handle_looping_behavior(loop_detection)
+Progressive Forgetting Protocol:
+python
+def apply_progressive_forgetting():
+    # After each completed component
+    if component_completed:
+        # 1. Summarize accomplishments (retain 50 tokens)
+        create_implementation_summary()
+        
+        # 2. Immediately discard implementation details (save 150+ tokens)
+        discard_implementation_details()
+        
+        # 3. Keep only interfaces and architectural decisions (retain 100 tokens)
+        preserve_interfaces_and_decisions()
+        
+        # 4. Update context summary with only essential information
+        update_context_summary()
+        
+        # 5. Immediately purge any remaining unrelated memory
+        apply_immediate_memory_purge()
+        
+        # 6. Check for and prevent looping
+        check_loop_prevention()
+3. Context-Aware Retention Policy
+Retain Permanently (Max 200 tokens):
+•	Project constraints and non-negotiables
+•	Architectural patterns and design decisions
+•	Critical business rules and requirements
+•	Quota-saving implementation techniques
+•	Loop prevention rules and protocols
+Retain Until Next Milestone (Max 300 tokens):
+•	Current implementation approach
+•	Active problem-solving context
+•	Recent debugging insights
+•	Department-specific implementation requirements
+•	Loop prevention tracking information
+Discard Immediately (Max 150 tokens):
+•	Previous implementation steps (automatically deleted)
+•	Redundant information (automatically deleted)
+•	Completed development details (automatically deleted)
+•	Anything not directly related to current task
+•	Loop detection metrics after resolution
+Required Continuation Protocol Components
+1. Development Phase Markers
+Implementation Requirements:
+•	Every development phase must include explicit completion markers
+•	Markers must survive Qwen Coder's daily memory reset
+•	Must be token-efficient (max 50 tokens per marker)
+•	Must trigger immediate memory purge upon completion
+•	Must include loop prevention tracking
+Exact Marker Format:
+python
+# === PHASE COMPLETION MARKER (30 tokens) ===
+# Design: [Design Number]
+# Phase: [Phase Number]
+# Component: [Component Name]
+# Status: [IN_PROGRESS | COMPLETED]
+# Last Saved: [YYYY-MM-DD HH:MM UTC]
+# Next Step: [Concise next step]
+# Loop Prevention: [Last processed step]
+# Purge: [Old context items purged]
+# =============================================
+Example Implementation:
+python
+# === PHASE COMPLETION MARKER (30 tokens) ===
+# Design: 7
+# Phase: 1
+# Component: error_detection_events
+# Status: IN_PROGRESS
+# Last Saved: 2023-11-10 14:30 UTC
+# Next Step: Implement callback_data format
+# Loop Prevention: bqml_training_search
+# Purge: search_intention_patterns, bqml_training_search
+# =============================================
+2. Token-Efficient Progress Tracking System
+progress_tracker.md Structure (Max 150 tokens):
+markdown
+# PROGRESS TRACKER (150 tokens max)
+
+## Current Status
+- Design: [Design Number]
+- Phase: [Phase Number]
+- Component: [Component Name]
+- Status: [IN_PROGRESS | COMPLETED]
+- Last Saved: [YYYY-MM-DD HH:MM UTC]
+- Token Budget: [X% remaining]
+
+## Critical Context
+- [3-4 bullet points of essential context, 10 tokens each]
+
+## Next Steps
+1. [Next immediate step, 20 tokens]
+2. [Following step, 20 tokens]
+
+## Loop Prevention
+- Last Processed: [Last completed step]
+- Loop Count: [Current loop counter]
+- Loop Breaker: [Active loop breaker protocol]
+
+## Purged Items
+- [List of immediately purged items]
+Example Implementation:
+markdown
+# PROGRESS TRACKER (150 tokens max)
+
+## Current Status
+- Design: 7
+- Phase: 1
+- Component: error_detection_events
+- Status: IN_PROGRESS
+- Last Saved: 2023-11-10 14:30 UTC
+- Token Budget: 45% remaining
+
+## Critical Context
+- Department_id must be one of 6 values (SALES excluded)
+- detection_layer must be 1-4 (1 = first line of defense)
+- Must implement inline keyboard suggestions
+
+## Next Steps
+1. Implement callback_data format rules
+2. Add snooze options to inline keyboard
+
+## Loop Prevention
+- Last Processed: bqml_training_search
+- Loop Count: 0
+- Loop Breaker: Progressive Forgetting Protocol
+
+## Purged Items
+- search_intention_patterns implementation details
+- bqml_training_search schema details
+3. Loop Prevention System
+Implementation Requirements:
+•	Implement multiple loop detection mechanisms
+•	Create automatic loop breaking protocols
+•	Track loop prevention metrics
+•	Integrate with token budget management
+•	Never allow more than 2 repetitions of the same processing step
+Loop Detection Mechanisms:
+python
+def detect_component_loop():
+    """Detect if the same component is being processed repeatedly"""
+    # Get recently processed components
+    recent_components = get_recently_processed_components(3)
+    
+    # Count occurrences of current component
+    component_count = recent_components.count(current_component)
+    
+    # Return detection result
+    return {
+        'detected': component_count >= 2,
+        'count': component_count,
+        'threshold': 2
+    }
+
+def detect_output_similarity_loop():
+    """Detect if output patterns are too similar"""
+    # Get last 3 outputs
+    outputs = get_last_outputs(3)
+    
+    # Calculate similarity score between outputs
+    similarity_score = calculate_output_similarity(outputs)
+    
+    # Return detection result
+    return {
+        'detected': similarity_score > 0.85,
+        'score': similarity_score,
+        'threshold': 0.85
+    }
+
+def detect_token_usage_loop():
+    """Detect looping patterns in token usage"""
+    # Get token usage pattern
+    token_pattern = get_token_usage_pattern()
+    
+    # Analyze for looping patterns
+    has_loop_pattern = analyze_token_pattern_for_loops(token_pattern)
+    
+    # Return detection result
+    return {
+        'detected': has_loop_pattern,
+        'pattern': token_pattern
+    }
+Loop Breaking Protocol:
+python
+def break_loop(loop_detection):
+    """Break out of detected looping behavior"""
+    # 1. Log the loop detection
+    log_loop_detection(loop_detection)
+    
+    # 2. Force progression to next step
+    force_progress_to_next_step()
+    
+    # 3. Apply aggressive memory purge
+    apply_aggressive_memory_purge()
+    
+    # 4. Reset loop counters
+    reset_loop_counters()
+    
+    # 5. Generate loop break message
+    generate_loop_break_message(loop_detection)
+    
+    # 6. Update progress tracker
+    update_progress_tracker_with_loop_break(loop_detection)
+Critical Implementation Rules:
+•	Loop detection must run every 100 tokens of processing
+•	Component loop threshold: 2 repetitions of same component
+•	Output similarity threshold: 85% similarity between outputs
+•	Token usage pattern threshold: specific repeating patterns
+•	Loop breaking must force progression to next step
+•	Loop breaking must reset all loop counters
+•	Loop breaking must never exceed 50 tokens of processing
+4. Token Budget Management System
+Implementation Requirements:
+•	Strict token budget allocation per development segment
+•	Automatic warning at 80% token usage
+•	Auto-save at 75% token usage to prevent data loss
+•	Immediate purge at 70% token usage to prevent reaching limits
+•	Loop detection at 65% token usage to prevent looping waste
+•	Progressive forgetting at 90% token usage
+Token Budget Allocation:
+markdown
+# TOKEN BUDGET (150 tokens max)
+- Core Principles: 50 tokens (33%)
+- Active Context: 75 tokens (50%)
+- Ephemeral Data: 25 tokens (17%)
+Token Usage Monitoring:
+python
+def monitor_token_usage():
+    tokens_used = calculate_current_token_usage()
+    tokens_remaining = MAX_TOKENS - tokens_used
+    
+    # Loop detection at 65% usage to prevent looping waste
+    if tokens_used > MAX_TOKENS * 0.65:
+        loop_detection = detect_looping_behavior()
+        if loop_detection['loop_detected']:
+            break_loop(loop_detection)
+    
+    # Immediate purge at 70% usage to prevent reaching limits
+    if tokens_used > MAX_TOKENS * 0.7:
+        apply_immediate_memory_purge()
+    
+    # Auto-save at 75% usage to prevent data loss
+    if tokens_used > MAX_TOKENS * 0.75:
+        auto_save_progress()
+    
+    # Warning at 80% usage
+    if tokens_used > MAX_TOKENS * 0.8:
+        apply_progressive_forgetting()
+    
+    # Critical warning at 90% usage
+    if tokens_used > MAX_TOKENS * 0.9:
+        apply_aggressive_compression()
+    
+    return tokens_remaining
+5. Continuation Prompt Template
+continuation_prompt.md Structure (Max 150 tokens):
+RESUME DEVELOPMENT (150 tokens max)
+
+Current Task: [Component Name]
+
+CRITICAL REQUIREMENTS:
+- [2-3 bullet points, 20 tokens each]
+
+NEXT IMPLEMENTATION STEP:
+[Concise step description, 40 tokens]
+
+OUTPUT FORMAT:
+[Format requirements, 30 tokens]
+
+LOOP PREVENTION:
+- Last Processed: [Last completed step]
+- Loop Count: [Current loop counter]
+
+PURGED ITEMS:
+[Recently purged context, 20 tokens]
+
+DO NOT REPEAT PREVIOUS WORK - START FROM THIS POINT
+Example Implementation:
+RESUME DEVELOPMENT (150 tokens max)
+
+Current Task: error_detection_events
+
+CRITICAL REQUIREMENTS:
+- detection_layer must be 1-4 (1 = first line)
+- Must implement inline keyboard suggestions
+- SALES department excluded from error patterns
+
+NEXT IMPLEMENTATION STEP:
+Implement callback_data format rules:
+"error:correct:{correction_id}:{transaction_id}"
+
+OUTPUT FORMAT:
+- JSON structure for inline_keyboard
+- Max 2 buttons per row
+- Must include snooze options
+
+LOOP PREVENTION:
+- Last Processed: bqml_training_search
+- Loop Count: 0
+
+PURGED ITEMS:
+- search_intention_patterns implementation details
+- bqml_training_search schema details
+
+DO NOT REPEAT PREVIOUS WORK - START FROM THIS POINT
+6. Development Segment Protocol
+Implementation Requirements:
+•	Break development into discrete, resume-able segments
+•	Each segment must fit within token budget
+•	Must include clear completion criteria
+•	Must auto-save at segment boundaries
+•	Must purge old context upon segment completion
+•	Must detect and break loops within segments
+Segment Definition Rules:
+•	Maximum size: 75% of Qwen Coder's token limit
+•	Must focus on one specific UI component or functionality
+•	Must have clear, testable completion criteria
+•	Must auto-save upon completion
+•	Must immediately purge old context upon completion
+•	Must detect loops within segment
+•	Must break loops if detected
+•	Must include progress markers upon completion
+Example Segment Definition:
+## Segment: error_detection_events_buttons
+
+### Objective
+Implement button layout for error detection events interface.
+
+### Completion Criteria
+- [ ] Callback_data follows exact format requirements
+- [ ] Snooze options vary based on error severity
+- [ ] All requirements from Design 7, Phase 1 are met
+
+### Token Budget
+- Max tokens for implementation: 1,000
+- Max tokens for context: 150
+- Total budget: 1,150 tokens
+
+### Loop Prevention
+- Component Loop Threshold: 2 repetitions
+- Output Similarity Threshold: 85%
+- Loop Breaker: Progressive Forgetting Protocol
+
+### Auto-Save Points
+- After implementing callback_data format
+- After adding snooze options
+- Upon segment completion
+
+### Purge Targets
+- search_intention_patterns implementation details
+- bqml_training_search schema details
+7. Daily Reset, Interruption Recovery & Loop Prevention Protocol
+Implementation Requirements:
+•	Create a protocol that executes when Qwen Coder's memory resets
+•	Must automatically identify where to resume development
+•	Must handle both planned daily resets and unexpected interruptions
+•	Must detect and break looping behavior
+•	Must minimize token usage while providing sufficient context
+•	Must immediately purge any remaining old context upon recovery
+Daily Reset, Recovery & Loop Prevention Workflow:
+1.	Check for interrupted session (Firestore state)
+2.	If interrupted session found, resume from last saved state
+3.	If no interrupted session, parse progress_tracker.md
+4.	Extract critical context from context_summary.md
+5.	Immediately purge any remaining old context
+6.	Detect and break any looping behavior
+7.	Generate continuation prompt using template
+8.	Begin implementation from specified next step
+9.	Update all tracking files upon segment completion
+Exact Daily Reset, Recovery & Loop Prevention Instructions:
+DAILY RESET, RECOVERY & LOOP PREVENTION PROTOCOL (120 tokens max)
+
+1. CHECK for interrupted session:
+   - Query Firestore for saved state
+   - If found (< 24 hours old), resume from there
+
+2. If no interruption, READ progress_tracker.md:
+   - Last Design, Phase, and Component
+   - Token Budget Remaining
+   - Next Steps
+   - Loop Prevention metrics
+
+3. CHECK for looping behavior:
+   - Component repetition count
+   - Output similarity score
+   - Token usage patterns
+
+4. BREAK loops if detected:
+   - Force progression to next step
+   - Reset loop counters
+   - Apply aggressive memory purge
+
+5. IMMEDIATELY PURGE old context:
+   - [List of purged items]
+
+6. EXTRACT critical context (max 50 tokens):
+   - [3-4 bullet points of essential context]
+
+7. GENERATE continuation prompt:
+   "RESUME DEVELOPMENT FROM THIS POINT
+    [Concise next step description]"
+
+8. IMPLEMENT ONLY the next development segment
+   - Stay within token budget
+   - Auto-save regularly
+   - Update tracking files upon completion
+   - Immediately purge old context upon completion
+   - Detect and break loops within segment
+
+DO NOT reprocess previous work
+DO NOT ignore token budget limits
+ALWAYS auto-save to recover from interruptions
+ALWAYS immediately purge old context
+ALWAYS detect and break loops
+Critical Implementation Requirements
+1. Memory Management Enforcement
+•	Core Principles must never exceed 200 tokens
+•	Active Context must never exceed 300 tokens
+•	Ephemeral Data must never exceed 150 tokens
+•	Total context must never exceed 650 tokens (80% of typical limit)
+•	Automatic token usage monitoring must run every 50 tokens
+•	Immediate memory purge must run at 70% token usage
+2. Loop Prevention Enforcement
+•	Loop detection must run every 100 tokens of processing
+•	Component loop threshold: 2 repetitions of same component
+•	Output similarity threshold: 85% similarity between outputs
+•	Token usage pattern threshold: specific repeating patterns
+•	Loop breaking must force progression to next step
+•	Loop breaking must reset all loop counters
+•	Loop breaking must never exceed 50 tokens of processing
+3. Immediate Memory Purge Implementation Requirements
+•	Purge must trigger immediately after each completed development segment
+•	Purge must identify specific items to delete (never entire context)
+•	Purge must verify items are no longer relevant to current task
+•	Purge must log all deleted items for potential recovery
+•	Purge must never delete Core Principles or current Active Context
+•	Purge must never exceed 50 tokens of processing
+4. Auto-Save Implementation Requirements
+•	Auto-save must trigger every 20 minutes during active development
+•	Auto-save must store state in Firestore (survives power outages)
+•	Auto-save must include timestamp in UTC for recovery detection
+•	Auto-save must capture exact next implementation step
+•	Auto-save must update progress markers in code
+•	Auto-save must never exceed 50 tokens of context
+5. Token Budget Management
+•	Track token usage for each development segment
+•	Allocate 75% of available tokens to implementation
+•	Reserve 25% of tokens for context and tracking updates
+•	Loop detection at 65% token usage to prevent looping waste
+•	Immediate purge at 70% token usage to prevent reaching limits
+•	Auto-save at 75% token usage to prevent data loss
+•	Stop development when 90% of token budget is reached
+•	Apply progressive forgetting at 80% token usage
+6. Context Preservation Rules
+•	Context summaries must be limited to 150 tokens
+•	Summaries must focus only on information needed for next step
+•	Never include full specifications in context summaries
+•	Use references to design documents instead of repeating content
+•	Immediately purge anything not directly relevant to current task
+•	Detect and break loops before they waste tokens
+7. Progress Tracking Discipline
+•	Update tracking files after every significant change
+•	Verify markers are present before reaching token limit
+•	Include exact next step in tracking files
+•	Auto-save progress at regular intervals
+•	Immediately purge old context upon segment completion
+•	Track loop prevention metrics in progress tracker
+•	Never assume previous state - always document explicitly
+8. Resumption Verification
+•	Before starting new development, verify last state
+•	Check for completion markers in code
+•	Confirm context summary matches last known state
+•	Validate next step is clearly defined
+•	Verify auto-save timestamp for interruption recovery
+•	Immediately purge any unrelated context upon recovery
+•	Check for and break any potential loops
+9. Error Handling for Interruptions
+•	If interrupted without updating markers:
+1.	Identify last function with complete implementation
+2.	Determine logical next step based on design
+3.	Create new markers reflecting actual state
+4.	Document assumptions made during resumption
+•	Never guess where development stopped - use code evidence
+•	Always verify with auto-saved state when available
+•	Immediately purge any unrelated context upon recovery
+•	Check for and break any potential loops
+10. Loop Handling Protocol
+•	If looping behavior detected:
+1.	Log the loop detection with details
+2.	Force progression to the next implementation step
+3.	Apply aggressive memory purge
+4.	Reset all loop counters
+5.	Generate loop break message for user
+6.	Update progress tracker with loop break information
+•	Never allow more than 2 repetitions of the same processing step
+•	Always break loops before they waste significant tokens
+11. Development Segment Guidelines
+•	Small enough to complete within token limits
+•	Focused on one specific UI component
+•	Has clear, testable completion criteria
+•	Includes all necessary context in minimal tokens
+•	Can be verified independently of other segments
+•	Auto-saves at logical segment boundaries
+•	Immediately purges old context upon completion
+•	Detects and breaks loops within segment
+Implementation Sequence
+1.	First, implement the marker system in all code files (Tier 1)
+2.	Then, create the token-efficient progress tracking system (Tier 2)
+3.	Next, develop the loop prevention system (Tier 2)
+4.	After that, implement the immediate memory purge system (Tier 3)
+5.	Then, implement the auto-save and recovery system (Tier 2)
+6.	After that, implement the token budget management system (Tier 2)
+7.	Next, implement the continuation prompt template (Tier 2)
+8.	Finally, establish the daily reset, interruption recovery & loop prevention protocol (Tier 1)
+This continuation protocol must operate within Qwen Coder's token constraints while ensuring development can resume exactly where it left off after both planned and unexpected interruptions, and preventing looping behavior that wastes tokens. Pay special attention to minimizing token usage for context preservation while maintaining sufficient information for accurate resumption.
+DO NOT ATTEMPT TO PROCESS ENTIRE SPECIFICATIONS IN ONE SESSION - BREAK INTO SMALL, RESUME-ABLE SEGMENTS.
+The system must be designed so that 100% of development can be resumed from the exact point of interruption without wasting tokens reprocessing completed work, whether the interruption was planned (daily reset), unexpected (power outage), or due to looping behavior.
+The system must IMMEDIATELY DELETE old unrelated documentation or memory upon completion of each development segment to maintain optimal token efficiency.
+The system must DETECT AND BREAK LOOPING BEHAVIOR before it wastes significant tokens.
+This is the complete Continuation Protocol specification. Implement exactly as specified without interpretation or deviation.
