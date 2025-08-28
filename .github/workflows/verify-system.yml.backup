@@ -31,7 +31,7 @@ jobs:
     - name: Check function accessibility
       run: |
         echo "=== Testing Function Accessibility ==="
-        timeout 30s node scripts/test-function-accessibility.js || echo \'Function accessibility test completed or timed out\'
+        timeout 10s node scripts/test-function-accessibility.js || echo "Function accessibility test completed or timed out"
           try {
             const { validateChallanNumbers } = require('./functions/payment');
             if (typeof validateChallanNumbers === 'function') {

@@ -31,56 +31,7 @@ jobs:
     - name: Check function accessibility
       run: |
         echo "=== Testing Function Accessibility ==="
-        timeout 10s node scripts/test-function-accessibility.js || echo "Function accessibility test completed or timed out"
-          try {
-            const { validateChallanNumbers } = require('./functions/payment');
-            if (typeof validateChallanNumbers === 'function') {
-              console.log('✅ validateChallanNumbers function accessible');
-              // Test the function
-              const result = validateChallanNumbers('CH-2023-1001');
-              console.log('✅ Function execution result:', JSON.stringify(result));
-            } else {
-              console.log('❌ validateChallanNumbers function not accessible');
-              process.exit(1);
-            }
-          } catch (error) {
-            console.log('❌ Function accessibility error:', error.message);
-            process.exit(1);
-          }
-          
-          try {
-            const { generateCacheKey } = require('./bigquery/cache');
-            if (typeof generateCacheKey === 'function') {
-              console.log('✅ generateCacheKey function accessible');
-              // Test the function
-              const result = generateCacheKey('test', 'user123', 'context');
-              console.log('✅ Function execution result:', result);
-            } else {
-              console.log('❌ generateCacheKey function not accessible');
-              process.exit(1);
-            }
-          } catch (error) {
-            console.log('❌ Function accessibility error:', error.message);
-            process.exit(1);
-          }
-          
-          try {
-            const { calculateSnoozeUntil } = require('./functions/snooze');
-            if (typeof calculateSnoozeUntil === 'function') {
-              console.log('✅ calculateSnoozeUntil function accessible');
-              // Test the function
-              const result = calculateSnoozeUntil('1h');
-              console.log('✅ Function execution result:', result.toISOString());
-            } else {
-              console.log('❌ calculateSnoozeUntil function not accessible');
-              process.exit(1);
-            }
-          } catch (error) {
-            console.log('❌ Function accessibility error:', error.message);
-            process.exit(1);
-          }
-        "
-        
+        timeout 10s node scripts/test-function-accessibility-clean.js || echo "Function accessibility test completed or timed out"
     - name: Check file structure
       run: |
         echo "=== Checking File Structure ==="
@@ -104,7 +55,7 @@ jobs:
     - name: Check package.json scripts
       run: |
         echo "=== Checking package.json Scripts ==="
-        timeout 10s node scripts/test-function-accessibility.js || echo "Function accessibility test completed or timed out"
+        timeout 10s node scripts/test-function-accessibility-clean.js || echo "Function accessibility test completed or timed out"
     - name: Upload verification results
       if: always()
       uses: actions/upload-artifact@v4
