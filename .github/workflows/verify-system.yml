@@ -26,7 +26,7 @@ jobs:
     - name: Check module imports
       run: |
         echo "=== Testing Module Imports ==="
-        timeout 30s node scripts/test-module-imports.js || echo \'Module import test completed or timed out\'
+        timeout 10s node scripts/test-module-imports.js || echo \'Module import test completed or timed out\'
         
     - name: Check function accessibility
       run: |
