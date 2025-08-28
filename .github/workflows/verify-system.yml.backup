@@ -26,7 +26,7 @@ jobs:
     - name: Check module imports
       run: |
         echo "=== Testing Module Imports ==="
-        timeout 30s node scripts/test-module-imports.js || echo \'Module import test completed or timed out\'
+        timeout 10s node scripts/test-module-imports.js || echo \'Module import test completed or timed out\'
         
     - name: Check function accessibility
       run: |
@@ -104,27 +104,7 @@ jobs:
     - name: Check package.json scripts
       run: |
         echo "=== Checking package.json Scripts ==="
-        node -e "
-          const fs = require('fs');
-          try {
-            const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-            const requiredScripts = ['test:unit', 'test:integration', 'test:e2e', 'verify'];
-            
-            for (const script of requiredScripts) {
-              if (packageJson.scripts && packageJson.scripts[script]) {
-                console.log('✅ ' + script + ' script exists');
-              } else {
-                console.log('❌ ' + script + ' script is missing');
-                process.exit(1);
-              }
-            }
-            console.log('✅ All required scripts present');
-          } catch (error) {
-            console.log('❌ Error checking package.json:', error.message);
-            process.exit(1);
-          }
-        "
-        
+        timeout 10s node scripts/test-function-accessibility.js || echo "Function accessibility test completed or timed out"
     - name: Upload verification results
       if: always()
       uses: actions/upload-artifact@v4

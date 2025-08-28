@@ -1,4 +1,5 @@
 const path = require('path');
+const __dirname = path.dirname(__filename);
 const projectRoot = path.join(__dirname, '..');
 
 const testModuleImport = (moduleName, modulePath) => {
