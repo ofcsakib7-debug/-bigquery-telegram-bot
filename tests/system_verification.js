@@ -2,167 +2,203 @@
 
 const path = require('path');
 
-// Change to the project root directory
-process.chdir(path.join(__dirname, '..'));
+// Get absolute paths to avoid relative path issues
+const projectRoot = path.join(__dirname, '..');
 
+// Safe import function with detailed error logging
+function safeImport(modulePath) {
+    try {
+        // Convert to absolute path
+        const absolutePath = path.resolve(projectRoot, modulePath);
+        return require(absolutePath);
+    } catch (error) {
+        console.error(`? Module import failed: ${modulePath}`);
+        console.error(`   Error: ${error.message}`);
+        console.error(`   Stack: ${error.stack}`);
+        return null;
+    }
+}
+
+// System Verification Script
 console.log('=== BigQuery Telegram Bot - System Verification ===');
-console.log('');
 
-// 1. Testing Module Imports with Detailed Error Logging...
+// 1. Test Module Imports
 console.log('1. Testing Module Imports with Detailed Error Logging...');
-console.log('');
 
-function safeImport(modulePath, moduleName) {
-  try {
-    const module = require(modulePath);
-    console.log(`  ✅ ${moduleName} module imported successfully`);
-    return { success: true, module };
-  } catch (error) {
-    console.log(`  ❌ ${moduleName} module import failed:`);
-    console.log(`     Error: ${error.message}`);
-    if (error.stack) {
-      console.log(`     Stack: ${error.stack.split('\n').slice(0, 3).join('\n')}`);
+// Use absolute paths for all imports
+const payment = safeImport('functions/payment');
+const snooze = safeImport('functions/snooze');
+const cache = safeImport('bigquery/cache');
+const searchValidation = safeImport('functions/search_validation');
+const errorDetection = safeImport('functions/error_detection');
+
+const importResults = {
+    payment: payment !== null,
+    snooze: snooze !== null,
+    cache: cache !== null,
+    searchValidation: searchValidation !== null,
+    errorDetection: errorDetection !== null
+};
+
+const importSummary = Object.values(importResults).every(result => result === true);
+console.log(`Import Summary: ${importSummary ? '? All modules imported successfully' : '? Some modules failed to import'}`);
+
+// 2. Test Function Accessibility
+console.log('\n2. Testing Function Accessibility with Detailed Error Logging...');
+
+function testFunction(module, functionName, testArgs, description) {
+    if (!module) {
+        console.log(`??  Skipping ${functionName} test - module failed to import`);
+        return false;
     }
-    return { success: false, error };
-  }
-}
-
-// Test all module imports
-const paymentImport = safeImport('./functions/payment', 'Payment');
-const snoozeImport = safeImport('./functions/snooze', 'Snooze');
-const cacheImport = safeImport('./bigquery/cache', 'Cache');
-const searchValidationImport = safeImport('./functions/search_validation', 'Search Validation');
-const errorDetectionImport = safeImport('./functions/error_detection', 'Error Detection');
-
-console.log('');
-const allImportsSuccessful = paymentImport.success && snoozeImport.success && 
-                           cacheImport.success && searchValidationImport.success && 
-                           errorDetectionImport.success;
-console.log(`  Import Summary: ${allImportsSuccessful ? '✅ All modules imported successfully' : '❌ Some modules failed to import'}`);
-console.log('');
-
-// 2. Testing Function Accessibility with Detailed Error Logging...
-console.log('2. Testing Function Accessibility with Detailed Error Logging...');
-console.log('');
-
-function testFunctionAccessibility(moduleImport, functionName, testArgs = []) {
-  if (!moduleImport.success) {
-    console.log(`  ⚠️  Skipping ${functionName} test - ${moduleImport.error.message.split(' ')[0]} module failed to import`);
-    return false;
-  }
-
-  try {
-    if (typeof moduleImport.module[functionName] === 'function') {
-      console.log(`  ✅ ${functionName} function is accessible`);
-      
-      // Test the function if it exists
-      if (testArgs.length > 0) {
-        const result = moduleImport.module[functionName](...testArgs);
-        console.log(`  ✅ ${functionName} executed successfully`);
-      }
-      
-      return true;
-    } else {
-      console.log(`  ❌ ${functionName} function not found in module`);
-      return false;
+    
+    try {
+        if (typeof module[functionName] === 'function') {
+            console.log(`? ${functionName} function accessible`);
+            
+            // Test the function
+            const result = module[functionName](...testArgs);
+            
+            if (result && typeof result === 'object' && result.toISOString) {
+                console.log(`? Function execution result:`, result.toISOString());
+            } else {
+                console.log(`? Function execution result:`, JSON.stringify(result));
+            }
+            
+            return true;
+        } else {
+            console.log(`? ${functionName} function not accessible`);
+            return false;
+        }
+    } catch (error) {
+        console.log(`? ${functionName} function error:`, error.message);
+        return false;
     }
-  } catch (error) {
-    console.log(`  ❌ ${functionName} function error: ${error.message}`);
-    return false;
-  }
 }
 
-testFunctionAccessibility(paymentImport, 'validateChallanNumbers', ['CH-2023-1001']);
-testFunctionAccessibility(cacheImport, 'generateCacheKey', ['test', 'user123', 'context']);
-testFunctionAccessibility(snoozeImport, 'calculateSnoozeUntil', ['1h']);
-testFunctionAccessibility(searchValidationImport, 'validate_search_query', ['test query']);
-testFunctionAccessibility(errorDetectionImport, 'detectLogicalError', ['test error']);
+const functionTests = [
+    {
+        module: payment,
+        functionName: 'validateChallanNumbers',
+        testArgs: ['CH-2023-1001'],
+        description: 'Payment validation'
+    },
+    {
+        module: cache,
+        functionName: 'generateCacheKey',
+        testArgs: ['test', 'user123', 'context'],
+        description: 'Cache key generation'
+    },
+    {
+        module: snooze,
+        functionName: 'calculateSnoozeUntil',
+        testArgs: ['1h'],
+        description: 'Snooze calculation'
+    },
+    {
+        module: searchValidation,
+        functionName: 'validate_search_query',
+        testArgs: ['user123', 'e cm'],
+        description: 'Search validation'
+    },
+    {
+        module: errorDetection,
+        functionName: 'detectLogicalError',
+        testArgs: [{
+            department: 'FINANCE',
+            payment_date: new Date('2023-01-15'),
+            transaction_date: new Date('2023-01-10'),
+            amount: 1000
+        }],
+        description: 'Error detection'
+    }
+];
 
-console.log('');
+const functionResults = functionTests.map(test => 
+    testFunction(test.module, test.functionName, test.testArgs, test.description)
+);
 
-// 3. Testing File Structure...
-console.log('3. Testing File Structure...');
-console.log('');
+const functionSummary = functionResults.every(result => result === true);
+console.log(`Function Accessibility Summary: ${functionSummary ? '? All functions accessible' : '? Some functions not accessible'}`);
 
-const fs = require('fs');
+// 3. Test Function Execution
+console.log('\n3. Testing Function Execution with Detailed Error Logging...');
 
-function checkFileExists(filePath, description) {
-  if (fs.existsSync(filePath)) {
-    console.log(`  ✅ ${description} exists (${filePath})`);
-    return true;
-  } else {
-    console.log(`  ❌ ${description} missing (${filePath})`);
-    return false;
-  }
-}
+// This section is already covered in the function accessibility tests
 
-checkFileExists('./functions/payment.js', 'Payment module');
-checkFileExists('./functions/snooze.js', 'Snooze module');
-checkFileExists('./bigquery/cache.js', 'Cache module');
-checkFileExists('./functions/search_validation.js', 'Search Validation module');
-checkFileExists('./functions/error_detection.js', 'Error Detection module');
-checkFileExists('./cloudbuild.yaml', 'Cloud Build configuration');
-checkFileExists('./package.json', 'Package configuration');
-checkFileExists('./README.md', 'Documentation');
+// 4. Test File Structure
+console.log('\n4. Testing File Structure...');
 
-console.log('');
+const requiredFiles = [
+    'functions/payment.js',
+    'functions/snooze.js',
+    'bigquery/cache.js',
+    'functions/search_validation.js',
+    'functions/error_detection.js',
+    'cloudbuild.yaml',
+    'package.json',
+    'README.md'
+];
 
-// 4. Testing Package.json Configuration...
-console.log('4. Testing Package.json Configuration...');
-console.log('');
+const fileResults = requiredFiles.map(filePath => {
+    const fullPath = path.join(projectRoot, filePath);
+    const exists = require('fs').existsSync(fullPath);
+    console.log(`${exists ? '?' : '?'} ${filePath} exists`);
+    return exists;
+});
 
+const fileSummary = fileResults.every(result => result === true);
+console.log(`File Structure Summary: ${fileSummary ? '? All required files exist' : '? Some required files missing'}`);
+
+// 5. Test Package.json Configuration
+console.log('\n5. Testing Package.json Configuration...');
+
+let packageJsonResult = false;
 try {
-  const packageJson = require('../package.json');
-  console.log('  ✅ package.json parsed successfully');
-  
-  // Check if test scripts exist
-  const scripts = packageJson.scripts || {};
-  if (scripts['test:unit']) console.log('  ✅ test:unit script exists');
-  else console.log('  ❌ test:unit script is missing');
-  
-  if (scripts['test:integration']) console.log('  ✅ test:integration script exists');
-  else console.log('  ❌ test:integration script is missing');
-  
-  if (scripts['test:e2e']) console.log('  ✅ test:e2e script exists');
-  else console.log('  ❌ test:e2e script is missing');
-  
-  if (scripts['verify']) console.log('  ✅ verify script exists');
-  else console.log('  ❌ verify script is missing');
-  
+    const packageJsonPath = path.join(projectRoot, 'package.json');
+    const packageJson = require(packageJsonPath);
+    
+    console.log('? package.json parsed successfully');
+    
+    const requiredScripts = ['test:unit', 'test:integration'];
+    const optionalScripts = ['test:e2e', 'verify'];
+    
+    const scriptResults = requiredScripts.map(script => {
+        const exists = packageJson.scripts && packageJson.scripts[script];
+        console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
+        return exists;
+    });
+    
+    optionalScripts.forEach(script => {
+        const exists = packageJson.scripts && packageJson.scripts[script];
+        console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
+    });
+    
+    packageJsonResult = scriptResults.every(result => result === true);
+    
 } catch (error) {
-  console.log('  ❌ package.json parsing failed:', error.message);
+    console.log(`? package.json error: ${error.message}`);
 }
 
-console.log('');
-console.log('=== System Verification Summary ===');
+console.log(`Package.json Configuration Summary: ${packageJsonResult ? '? PASS' : '? FAIL'}`);
 
-// Summary
-const fileStructure = checkFileExists('./functions/payment.js', '') && 
-                     checkFileExists('./functions/snooze.js', '') && 
-                     checkFileExists('./bigquery/cache.js', '') && 
-                     checkFileExists('./functions/search_validation.js', '') && 
-                     checkFileExists('./functions/error_detection.js', '') && 
-                     checkFileExists('./cloudbuild.yaml', '') && 
-                     checkFileExists('./package.json', '') && 
-                     checkFileExists('./README.md', '');
+// Final Summary
+console.log('\n=== System Verification Summary ===');
+console.log(`  moduleImports: ${importSummary ? '? PASS' : '? FAIL'}`);
+console.log(`  functionAccessibility: ${functionSummary ? '? PASS' : '? FAIL'}`);
+console.log(`  fileStructure: ${fileSummary ? '? PASS' : '? FAIL'}`);
+console.log(`  packageJson: ${packageJsonResult ? '? PASS' : '? FAIL'}`);
 
-console.log(`  moduleImports: ${allImportsSuccessful ? '✅ PASS' : '❌ FAIL'}`);
-console.log(`  functionAccessibility: ${allImportsSuccessful ? '✅ PASS' : '❌ FAIL'}`);
-console.log(`  fileStructure: ${fileStructure ? '✅ PASS' : '❌ FAIL'}`);
-console.log(`  packageJson: ${fileStructure ? '✅ PASS' : '❌ FAIL'}`); // Simplified for demo
+const overallStatus = importSummary && functionSummary && fileSummary && packageJsonResult;
+console.log(`\nOverall System Status: ${overallStatus ? '? ALL TESTS PASSED' : '? ISSUES FOUND'}`);
 
-console.log('');
-console.log(`Overall System Status: ${allImportsSuccessful && fileStructure ? '✅ ALL CHECKS PASSED' : '❌ ISSUES FOUND'}`);
-
-if (!allImportsSuccessful || !fileStructure) {
-  console.log('');
-  console.log('🔧 Recommended Actions:');
-  if (!allImportsSuccessful) console.log('  - Check module import errors above');
-  if (!fileStructure) console.log('  - Check file structure errors above');
+if (!overallStatus) {
+    console.log('\n?? Recommended Actions:');
+    if (!importSummary) console.log('  - Check module import errors above');
+    if (!functionSummary) console.log('  - Check function accessibility errors above');
+    if (!fileSummary) console.log('  - Check file structure errors above');
+    if (!packageJsonResult) console.log('  - Check package.json scripts configuration');
 }
 
-console.log('');
-console.log('=== Verification Complete ===');
-
-// Exit with appropriate code
-process.exit(allImportsSuccessful && fileStructure ? 0 : 1);
+console.log('\n=== Verification Complete ===');
+process.exit(overallStatus ? 0 : 1);
