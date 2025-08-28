@@ -167,7 +167,7 @@ try {
     // Check required scripts
     console.log('Checking required scripts:');
     const requiredResults = requiredScripts.map(script => {
-        const exists = packageJson.scripts && packageJson.scripts[script];
+        const exists = !!(packageJson.scripts && packageJson.scripts[script]);
         console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
         return exists;
     });
@@ -175,13 +175,15 @@ try {
     // Check optional scripts
     console.log('Checking optional scripts:');
     const optionalResults = optionalScripts.map(script => {
-        const exists = packageJson.scripts && packageJson.scripts[script];
+        const exists = !!(packageJson.scripts && packageJson.scripts[script]);
         console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
         return exists;
     });
     
     // Package.json passes if ALL required scripts are present
     packageJsonResult = requiredResults.every(result => result === true);
+    console.log(`Required scripts check: ${packageJsonResult ? 'PASS' : 'FAIL'}`);
+    console.log(`Required results: [${requiredResults.join(', ')}]`);
     console.log(`Required scripts check: ${packageJsonResult ? 'PASS' : 'FAIL'}`);
     
     // Additional info
