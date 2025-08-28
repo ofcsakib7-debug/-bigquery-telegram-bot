@@ -26,7 +26,31 @@ jobs:
     - name: Check module imports
       run: |
         echo "=== Testing Module Imports ==="
-        timeout 30s node scripts/test-module-imports.js || echo \'Module import test completed or timed out\'
+        node -e "
+          try {
+            const payment = require('./functions/payment');
+            console.log('✅ Payment module imports successfully');
+          } catch (error) {
+            console.log('❌ Payment module error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const snooze = require('./functions/snooze');
+            console.log('✅ Snooze module imports successfully');
+          } catch (error) {
+            console.log('❌ Snooze module error:', error.message);
+            process.exit(1);
+          }
+          
+          try {
+            const cache = require('./bigquery/cache');
+            console.log('✅ Cache module imports successfully');
+          } catch (error) {
+            console.log('❌ Cache module error:', error.message);
+            process.exit(1);
+          }
+        "
         
     - name: Check function accessibility
       run: |
