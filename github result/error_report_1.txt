@@ -1,0 +1,313 @@
+Run npm run test:unit
+  npm run test:unit
+  shell: /usr/bin/bash -e {0}
+
+> bigquery-telegram-bot@1.0.0 test:unit
+> jest tests/unit
+
+PASS tests/unit/remarks.test.js
+  ● Console
+
+    console.log
+      Stored remark for review: remark_12345_1756361435560_9ktmh2gqv
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Stored remark for review: remark_12345_1756361435569_ikdz9oano
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Remark remark_12345_1234567890_test acknowledged by manager manager123
+
+      at log (functions/remarks.js:223:13)
+
+PASS tests/unit/remarks_integration.test.js
+  ● Console
+
+    console.log
+      Stored remark for review: remark_12345_1756361435736_7w3cpuup2
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Stored remark for review: remark_12345_1756361435744_6x81gtqn8
+
+      at log (functions/remarks.js:104:15)
+
+PASS tests/unit/error_detection.test.js
+PASS tests/unit/microbatching.test.js
+  ● Console
+
+    console.log
+      Flushing batch for test_table with 2 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table
+
+      at log (bigquery/microbatching.js:86:13)
+
+    console.log
+      Flushing batch for test_table with 1 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.error
+      Error flushing batch for test_table: Error: BigQuery insert failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/microbatching.test.js:123:45)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      87 |     
+      88 |   } catch (error) {
+    > 89 |     console.error(`Error flushing batch for ${tableId}:`, error);
+         |             ^
+      90 |     // In a production environment, we might want to send to a dead letter queue
+      91 |   }
+      92 | }
+
+      at error (bigquery/microbatching.js:89:13)
+      at Object.<anonymous> (tests/unit/microbatching.test.js:130:7)
+
+    console.log
+      Flushing batch for test_table1 with 2 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table1
+
+      at log (bigquery/microbatching.js:86:13)
+
+    console.log
+      Flushing batch for test_table2 with 1 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table2
+
+      at log (bigquery/microbatching.js:86:13)
+
+PASS tests/unit/cache.test.js
+PASS tests/unit/snooze.test.js
+PASS tests/unit/payment.test.js
+PASS tests/unit/search_validation.test.js
+FAIL tests/unit/ci_cd_verification.test.js
+  ● Test suite failed to run
+
+    Your test suite must contain at least one test.
+
+      at onResult (node_modules/@jest/core/build/TestScheduler.js:133:18)
+      at node_modules/@jest/core/build/TestScheduler.js:254:19
+      at node_modules/emittery/index.js:363:13
+          at Array.map (<anonymous>)
+      at Emittery.emit (node_modules/emittery/index.js:361:23)
+
+PASS tests/unit/security.test.js
+  ● Console
+
+    console.error
+      Error encrypting sensitive data: Error: KMS encryption failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:67:47)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      42 |     return result.ciphertext.toString('base64');
+      43 |   } catch (error) {
+    > 44 |     console.error('Error encrypting sensitive data:', error);
+         |             ^
+      45 |     throw error;
+      46 |   }
+      47 | }
+
+      at error (functions/security.js:44:13)
+      at Object.<anonymous> (tests/unit/security.test.js:69:7)
+
+    console.error
+      Error decrypting sensitive data: Error: KMS decryption failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:98:47)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      66 |     return result.plaintext.toString();
+      67 |   } catch (error) {
+    > 68 |     console.error('Error decrypting sensitive data:', error);
+         |             ^
+      69 |     throw error;
+      70 |   }
+      71 | }
+
+      at error (functions/security.js:68:13)
+      at Object.<anonymous> (tests/unit/security.test.js:100:7)
+
+    console.error
+      Error validating input pattern: SyntaxError: Invalid regular expression: /[/: Unterminated character class
+          at new RegExp (<anonymous>)
+          at validateInputPattern (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/functions/security.js:144:19)
+          at Object.validateInputPattern (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:116:22)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      145 |     return regex.test(input);
+      146 |   } catch (error) {
+    > 147 |     console.error('Error validating input pattern:', error);
+          |             ^
+      148 |     return false;
+      149 |   }
+      150 | }
+
+      at error (functions/security.js:147:13)
+      at Object.validateInputPattern (tests/unit/security.test.js:116:22)
+
+PASS tests/unit/simple.test.js
+PASS tests/unit/error_handling.test.js (8.468 s)
+  ● Console
+
+    console.error
+      Error in mockConstructor: Error: Test error
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/error_handling.test.js:30:50)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      22 |       return await fn(...args);
+      23 |     } catch (error) {
+    > 24 |       console.error(`Error in ${fn.name}:`, error);
+         |               ^
+      25 |       
+      26 |       // Log error details
+      27 |       logErrorDetails(error, args);
+
+      at error (functions/error_handling.js:24:15)
+      at Object.<anonymous> (tests/unit/error_handling.test.js:33:22)
+
+    console.error
+      Error details: {
+        "timestamp": "2025-08-28T06:10:35.502Z",
+        "errorMessage": "Test error",
+        "errorStack": "Error: Test error\n    at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/error_handling.test.js:30:50)\n    at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)\n    at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)\n    at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)",
+        "functionName": "unknown",
+        "arguments": [
+          "arg1",
+          "arg2"
+        ]
+      }
+
+      53 |     };
+      54 |     
+    > 55 |     console.error('Error details:', JSON.stringify(errorInfo, null, 2));
+         |             ^
+      56 |   } catch (logError) {
+      57 |     console.error('Error logging error details:', logError);
+      58 |   }
+
+      at error (functions/error_handling.js:55:13)
+      at logErrorDetails (functions/error_handling.js:27:7)
+      at Object.<anonymous> (tests/unit/error_handling.test.js:33:22)
+
+    console.log
+      Attempt 1 failed. Retrying in 847.1573127892426ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1868.9198976708392ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 1 failed. Retrying in 901.7455773303619ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1910.3298124764503ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 1 failed. Retrying in 776.7593658151754ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1420.9197831686197ms...
+
+      at log (functions/error_handling.js:97:15)
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 1 failed, 11 passed, 12 total
+Tests:       110 passed, 110 total
+Snapshots:   0 total
+Time:        9.154 s
+Ran all test suites matching /tests\/unit/i.
+Error: Process completed with exit code 1.
