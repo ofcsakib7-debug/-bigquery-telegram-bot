@@ -17,7 +17,7 @@ const mockBigQuery = {
 };
 BigQuery.mockImplementation(() => mockBigQuery);
 
-const { insertRecord, flushBatch, flushAllBatches } = require('../../bigquery/microbatching');
+const { insertRecord, flushBatch, flushAllBatches } = require('../../../bigquery/microbatching');
 
 describe('Microbatching Functionality', () => {
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe('Microbatching Functionality', () => {
     mockBigQuery.insert.mockResolvedValue();
     
     // Clear batch storage to ensure clean state for each test
-    const microbatching = require('../../bigquery/microbatching');
+    const microbatching = require('../../../bigquery/microbatching');
     microbatching.clearAllBatches();
   });
 

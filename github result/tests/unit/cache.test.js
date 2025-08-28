@@ -7,7 +7,7 @@
 // Next Step: Implement tests for cache key generation
 // =============================================
 
-const { generateCacheKey } = require('../../bigquery/cache');
+const { generateCacheKey } = require('../../../bigquery/cache');
 
 // Mock BigQuery
 jest.mock('@google-cloud/bigquery');
@@ -17,7 +17,7 @@ const mockBigQuery = {
 };
 BigQuery.mockImplementation(() => mockBigQuery);
 
-const { getFromCache, storeInCache } = require('../../bigquery/cache');
+const { getFromCache, storeInCache } = require('../../../bigquery/cache');
 
 describe('Cache Functionality', () => {
   describe('generateCacheKey', () => {

@@ -1,8 +1,8 @@
 // tests/integration/design6_design7.test.js - Integration tests for Design 6 and Design 7
 
 // Import required modules
-const { validate_search_query } = require('../../functions/search_validation');
-const { detectLogicalError } = require('../../functions/error_detection');
+const { validate_search_query } = require('../../../functions/search_validation');
+const { detectLogicalError } = require('../../../functions/error_detection');
 
 describe('Design 6 & Design 7 Integration Tests', () => {
   // Test Design 6 (Context-Aware Search Validation)

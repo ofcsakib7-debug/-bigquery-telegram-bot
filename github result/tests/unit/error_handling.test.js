@@ -12,7 +12,7 @@ const {
   retryWithBackoff, 
   generateUserFriendlyErrorMessage,
   CircuitBreaker
-} = require('../../functions/error_handling');
+} = require('../../../functions/error_handling');
 
 describe('Error Handling Functionality', () => {
   describe('withErrorHandling', () => {

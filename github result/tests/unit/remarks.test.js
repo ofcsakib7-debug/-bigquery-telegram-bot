@@ -30,7 +30,7 @@ const {
   acknowledgeRemark,
   getPendingRemarksForManager,
   generateManagerReviewMessage
-} = require('../../functions/remarks');
+} = require('../../../functions/remarks');
 
 describe('Remarks Functionality', () => {
   beforeEach(() => {

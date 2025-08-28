@@ -23,12 +23,12 @@ const mockFirestore = {
 };
 Firestore.mockImplementation(() => mockFirestore);
 
-const { validateChallanNumbers } = require('../../functions/payment');
+const { validateChallanNumbers } = require('../../../functions/payment');
 const { 
   extractRemarks, 
   storeRemarksForReview,
   generateRemarksConfirmation
-} = require('../../functions/remarks');
+} = require('../../../functions/remarks');
 
 describe('Remarks Integration Tests', () => {
   beforeEach(() => {

@@ -10,14 +10,14 @@
 const {
   PAYMENT_RECEIPTS_SCHEMA,
   ACCOUNTING_GENERAL_LEDGER_SCHEMA
-} = require('../../bigquery/schemas');
+} = require('../../../bigquery/schemas');
 
 const {
   UI_INTERACTION_PATTERNS_SCHEMA,
   MASTER_CACHE_SCHEMA,
   BQML_TRAINING_UI_OPTIMIZATION_SCHEMA,
   CACHE_UI_OPTIMIZATION_SCHEMA
-} = require('../../bigquery/additional_schemas');
+} = require('../../../bigquery/additional_schemas');
 
 describe('BigQuery Schemas', () => {
   describe('Payment Receipts Schema', () => {

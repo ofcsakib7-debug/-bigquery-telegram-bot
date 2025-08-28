@@ -22,7 +22,7 @@ const {
   decryptSensitiveData, 
   validateInputPattern,
   sanitizeCallbackData 
-} = require('../../functions/security');
+} = require('../../../functions/security');
 
 describe('Security Functionality', () => {
   beforeEach(() => {

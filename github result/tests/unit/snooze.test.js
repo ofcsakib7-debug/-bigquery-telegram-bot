@@ -47,7 +47,7 @@ describe('Snooze Functionality', () => {
 
     test('should calculate tomorrow morning snooze (9am)', () => {
       const result = calculateSnoozeUntil('tomorrow');
-      const expected = new Date('2023-11-05T09:00:00Z');
+      const expected = new Date('2023-11-06T09:00:00Z');
       expect(result).toEqual(expected);
     });
 

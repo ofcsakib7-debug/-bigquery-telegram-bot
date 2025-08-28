@@ -1,5 +1,5 @@
 // Simple test to verify the setup
-const { validateChallanNumbers } = require('../../functions/payment');
+const { validateChallanNumbers } = require('../../../functions/payment');
 
 test('validateChallanNumbers should work correctly', () => {
   const result = validateChallanNumbers('CH-2023-1001');
