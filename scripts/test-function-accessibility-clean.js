@@ -8,7 +8,7 @@ const path = require('path');
 function testFunction(moduleRelativePath, functionName, testArgs, formatter = JSON.stringify) {
   try {
     // Build the correct path from project root
-    const modulePath = path.join(__dirname, '..', moduleRelativePath);
+    const modulePath = path.join(__dirname, '..', ...moduleRelativePath.split('/'));
     const module = require(modulePath);
     
     if (typeof module[functionName] === 'function') {
