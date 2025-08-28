@@ -27,9 +27,9 @@ const testFunction = (functionName, modulePath, functionNameInModule, testArgs) 
 
 // Test all functions
 try {
-  const paymentSuccess = testFunction('validateChallanNumbers', 'functions/payment', 'validateChallanNumbers', ['CH-2023-1001']);
-  const cacheSuccess = testFunction('generateCacheKey', 'bigquery/cache', 'generateCacheKey', ['test', 'user123', 'context']);
-  const snoozeSuccess = testFunction('calculateSnoozeUntil', 'functions/snooze', 'calculateSnoozeUntil', ['1h']);
+  const paymentSuccess = testFunction('validateChallanNumbers', './functions/payment', 'validateChallanNumbers', ['CH-2023-1001']);
+  const cacheSuccess = testFunction('generateCacheKey', './bigquery/cache', 'generateCacheKey', ['test', 'user123', 'context']);
+  const snoozeSuccess = testFunction('calculateSnoozeUntil', './functions/snooze', 'calculateSnoozeUntil', ['1h']);
 
   // Exit with appropriate code
   if (paymentSuccess && cacheSuccess && snoozeSuccess) {
