@@ -1,6 +1,6 @@
 // tests/unit/search_validation.test.js - Unit tests for Design 6 (Context-Aware Search Validation)
 
-const { validate_search_query, validate_syntax, validate_logic, check_heuristic_patterns } = require('../../functions/search_validation');
+const { validate_search_query, validate_syntax, validate_logic, check_heuristic_patterns } = require('../../../functions/search_validation');
 
 describe('Design 6: Context-Aware Search Validation', () => {
   describe('validate_syntax', () => {

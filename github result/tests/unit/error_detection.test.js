@@ -1,6 +1,6 @@
 // tests/unit/error_detection.test.js - Unit tests for Design 7 (Logical Error Detection)
 
-const { detectLogicalError, detectFinanceError, detectInventoryError, detectSalesError, detectServiceError } = require('../../functions/error_detection');
+const { detectLogicalError, detectFinanceError, detectInventoryError, detectSalesError, detectServiceError } = require('../../../functions/error_detection');
 
 describe('Design 7: Logical Error Detection', () => {
   describe('detectFinanceError', () => {

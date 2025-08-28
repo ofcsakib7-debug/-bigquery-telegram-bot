@@ -1,0 +1,45 @@
+Run echo "=== Running Unit Tests for Design 6 & 7 ==="
+  echo "=== Running Unit Tests for Design 6 & 7 ==="
+  # Check if test files exist and run them with Jest
+  if [ -f "tests/unit/search_validation.test.js" ]; then
+    echo "Running Design 6 unit tests..."
+    npx jest tests/unit/search_validation.test.js
+  else
+    echo "❌ Design 6 test file not found"
+    exit 1
+  fi
+  
+  if [ -f "tests/unit/error_detection.test.js" ]; then
+    echo "Running Design 7 unit tests..."
+    npx jest tests/unit/error_detection.test.js
+  else
+    echo "❌ Design 7 test file not found"
+    exit 1
+  fi
+  shell: /usr/bin/bash -e {0}
+=== Running Unit Tests for Design 6 & 7 ===
+Running Design 6 unit tests...
+FAIL github result/tests/unit/search_validation.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/search_validation' from 'github result/tests/unit/search_validation.test.js'
+
+      1 | // tests/unit/search_validation.test.js - Unit tests for Design 6 (Context-Aware Search Validation)
+      2 |
+    > 3 | const { validate_search_query, validate_syntax, validate_logic, check_heuristic_patterns } = require('../../functions/search_validation');
+        |                                                                                              ^
+      4 |
+      5 | describe('Design 6: Context-Aware Search Validation', () => {
+      6 |   describe('validate_syntax', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/search_validation.test.js:3:94)
+
+PASS tests/unit/search_validation.test.js
+
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       10 passed, 10 total
+Snapshots:   0 total
+Time:        0.666 s
+Ran all test suites matching /tests\/unit\/search_validation.test.js/i.
+Error: Process completed with exit code 1.
