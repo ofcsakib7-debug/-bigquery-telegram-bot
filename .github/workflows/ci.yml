@@ -1,0 +1,42 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+        
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run unit tests with mocking
+      run: |
+        echo "Running unit tests with proper mocking..."
+        npm run test:unit
+        
+    - name: Run integration tests with mocking
+      run: |
+        echo "Running integration tests with proper mocking..."
+        npm run test:integration
+        
+    - name: Run verification tests
+      run: |
+        echo "Running verification tests..."
+        npm run test:verification

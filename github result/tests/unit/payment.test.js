@@ -7,7 +7,7 @@
 // Next Step: Implement tests for challan validation
 // =============================================
 
-const { validateChallanNumbers, generateChallanValidationError } = require('../../functions/payment');
+const { validateChallanNumbers, generateChallanValidationError } = require('../../../functions/payment');
 
 describe('Payment Workflow Functions', () => {
   describe('validateChallanNumbers', () => {

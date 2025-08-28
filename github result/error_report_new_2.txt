@@ -1,0 +1,860 @@
+Run npm run test:unit
+  npm run test:unit
+  shell: /usr/bin/bash -e {0}
+
+> bigquery-telegram-bot@1.0.0 test:unit
+> jest tests/unit
+
+FAIL github result/tests/unit/error_handling.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/error_handling' from 'github result/tests/unit/error_handling.test.js'
+
+      13 |   generateUserFriendlyErrorMessage,
+      14 |   CircuitBreaker
+    > 15 | } = require('../../functions/error_handling');
+         |     ^
+      16 |
+      17 | describe('Error Handling Functionality', () => {
+      18 |   describe('withErrorHandling', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/error_handling.test.js:15:5)
+
+FAIL github result/tests/unit/remarks.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/remarks' from 'github result/tests/unit/remarks.test.js'
+
+      31 |   getPendingRemarksForManager,
+      32 |   generateManagerReviewMessage
+    > 33 | } = require('../../functions/remarks');
+         |     ^
+      34 |
+      35 | describe('Remarks Functionality', () => {
+      36 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/remarks.test.js:33:5)
+
+FAIL github result/tests/unit/remarks_integration.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/remarks_integration.test.js'
+
+      24 | Firestore.mockImplementation(() => mockFirestore);
+      25 |
+    > 26 | const { validateChallanNumbers } = require('../../functions/payment');
+         |                                    ^
+      27 | const { 
+      28 |   extractRemarks, 
+      29 |   storeRemarksForReview,
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/remarks_integration.test.js:26:36)
+
+PASS tests/unit/remarks.test.js
+  ● Console
+
+    console.log
+      Stored remark for review: remark_12345_1756364714079_n6n835w83
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Stored remark for review: remark_12345_1756364714088_geuaiktz5
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Remark remark_12345_1234567890_test acknowledged by manager manager123
+
+      at log (functions/remarks.js:223:13)
+
+PASS tests/unit/remarks_integration.test.js
+  ● Console
+
+    console.log
+      Stored remark for review: remark_12345_1756364714414_ubv704bdn
+
+      at log (functions/remarks.js:104:15)
+
+    console.log
+      Stored remark for review: remark_12345_1756364714418_iz9rdw64e
+
+      at log (functions/remarks.js:104:15)
+
+PASS tests/unit/microbatching.test.js
+  ● Console
+
+    console.log
+      Flushing batch for test_table with 2 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table
+
+      at log (bigquery/microbatching.js:86:13)
+
+    console.log
+      Flushing batch for test_table with 1 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.error
+      Error flushing batch for test_table: Error: BigQuery insert failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/microbatching.test.js:123:45)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      87 |     
+      88 |   } catch (error) {
+    > 89 |     console.error(`Error flushing batch for ${tableId}:`, error);
+         |             ^
+      90 |     // In a production environment, we might want to send to a dead letter queue
+      91 |   }
+      92 | }
+
+      at error (bigquery/microbatching.js:89:13)
+      at Object.<anonymous> (tests/unit/microbatching.test.js:130:7)
+
+    console.log
+      Flushing batch for test_table1 with 2 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table1
+
+      at log (bigquery/microbatching.js:86:13)
+
+    console.log
+      Flushing batch for test_table2 with 1 records
+
+      at log (bigquery/microbatching.js:75:13)
+
+    console.log
+      Successfully flushed batch for test_table2
+
+      at log (bigquery/microbatching.js:86:13)
+
+FAIL github result/tests/unit/microbatching.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../bigquery/microbatching' from 'github result/tests/unit/microbatching.test.js'
+
+      18 | BigQuery.mockImplementation(() => mockBigQuery);
+      19 |
+    > 20 | const { insertRecord, flushBatch, flushAllBatches } = require('../../bigquery/microbatching');
+         |                                                       ^
+      21 |
+      22 | describe('Microbatching Functionality', () => {
+      23 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/microbatching.test.js:20:55)
+
+PASS github result/tests/unit/error_detection.test.js
+PASS tests/unit/error_detection.test.js
+FAIL github result/tests/unit/security.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/security' from 'github result/tests/unit/security.test.js'
+
+      23 |   validateInputPattern,
+      24 |   sanitizeCallbackData 
+    > 25 | } = require('../../functions/security');
+         |     ^
+      26 |
+      27 | describe('Security Functionality', () => {
+      28 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/security.test.js:25:5)
+
+FAIL github result/tests/unit/cache.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../bigquery/cache' from 'github result/tests/unit/cache.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { generateCacheKey } = require('../../bigquery/cache');
+         |                              ^
+      11 |
+      12 | // Mock BigQuery
+      13 | jest.mock('@google-cloud/bigquery');
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/cache.test.js:10:30)
+
+PASS tests/unit/security.test.js
+  ● Console
+
+    console.error
+      Error encrypting sensitive data: Error: KMS encryption failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:67:47)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      42 |     return result.ciphertext.toString('base64');
+      43 |   } catch (error) {
+    > 44 |     console.error('Error encrypting sensitive data:', error);
+         |             ^
+      45 |     throw error;
+      46 |   }
+      47 | }
+
+      at error (functions/security.js:44:13)
+      at Object.<anonymous> (tests/unit/security.test.js:69:7)
+
+    console.error
+      Error decrypting sensitive data: Error: KMS decryption failed
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:98:47)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      66 |     return result.plaintext.toString();
+      67 |   } catch (error) {
+    > 68 |     console.error('Error decrypting sensitive data:', error);
+         |             ^
+      69 |     throw error;
+      70 |   }
+      71 | }
+
+      at error (functions/security.js:68:13)
+      at Object.<anonymous> (tests/unit/security.test.js:100:7)
+
+    console.error
+      Error validating input pattern: SyntaxError: Invalid regular expression: /[/: Unterminated character class
+          at new RegExp (<anonymous>)
+          at validateInputPattern (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/functions/security.js:144:19)
+          at Object.validateInputPattern (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/security.test.js:116:22)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      145 |     return regex.test(input);
+      146 |   } catch (error) {
+    > 147 |     console.error('Error validating input pattern:', error);
+          |             ^
+      148 |     return false;
+      149 |   }
+      150 | }
+
+      at error (functions/security.js:147:13)
+      at Object.validateInputPattern (tests/unit/security.test.js:116:22)
+
+FAIL github result/tests/unit/snooze.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/snooze' from 'github result/tests/unit/snooze.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { calculateSnoozeUntil, generateSnoozeConfirmation } = require('../../functions/snooze');
+         |                                                              ^
+      11 |
+      12 | describe('Snooze Functionality', () => {
+      13 |   describe('calculateSnoozeUntil', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/snooze.test.js:10:62)
+
+PASS tests/unit/cache.test.js
+FAIL github result/tests/unit/payment.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/payment.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { validateChallanNumbers, generateChallanValidationError } = require('../../functions/payment');
+         |                                                                    ^
+      11 |
+      12 | describe('Payment Workflow Functions', () => {
+      13 |   describe('validateChallanNumbers', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/payment.test.js:10:68)
+
+PASS tests/unit/snooze.test.js
+PASS github result/tests/unit/search_validation.test.js
+PASS tests/unit/payment.test.js
+FAIL tests/unit/ci_cd_verification.test.js
+  ● Test suite failed to run
+
+    Your test suite must contain at least one test.
+
+      at onResult (node_modules/@jest/core/build/TestScheduler.js:133:18)
+      at node_modules/@jest/core/build/TestScheduler.js:254:19
+      at node_modules/emittery/index.js:363:13
+          at Array.map (<anonymous>)
+      at Emittery.emit (node_modules/emittery/index.js:361:23)
+
+PASS tests/unit/search_validation.test.js
+FAIL github result/tests/unit/simple.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/simple.test.js'
+
+      1 | // Simple test to verify the setup
+    > 2 | const { validateChallanNumbers } = require('../../functions/payment');
+        |                                    ^
+      3 |
+      4 | test('validateChallanNumbers should work correctly', () => {
+      5 |   const result = validateChallanNumbers('CH-2023-1001');
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/simple.test.js:2:36)
+
+FAIL github result/tests/unit/ci_cd_verification.test.js
+  ● CI/CD Component Verification › should import payment module successfully
+
+    Cannot find module '../functions/payment' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      4 | describe('CI/CD Component Verification', () => {
+      5 |   test('should import payment module successfully', () => {
+    > 6 |     const payment = require('../functions/payment');
+        |                     ^
+      7 |     expect(payment).toBeDefined();
+      8 |   });
+      9 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:6:21)
+
+  ● CI/CD Component Verification › should import snooze module successfully
+
+    Cannot find module '../functions/snooze' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+       9 |
+      10 |   test('should import snooze module successfully', () => {
+    > 11 |     const snooze = require('../functions/snooze');
+         |                    ^
+      12 |     expect(snooze).toBeDefined();
+      13 |   });
+      14 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:11:20)
+
+  ● CI/CD Component Verification › should import cache module successfully
+
+    Cannot find module '../bigquery/cache' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      14 |
+      15 |   test('should import cache module successfully', () => {
+    > 16 |     const cache = require('../bigquery/cache');
+         |                   ^
+      17 |     expect(cache).toBeDefined();
+      18 |   });
+      19 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:16:19)
+
+  ● CI/CD Component Verification › should have validateChallanNumbers function accessible
+
+    Cannot find module '../functions/payment' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      19 |
+      20 |   test('should have validateChallanNumbers function accessible', () => {
+    > 21 |     const payment = require('../functions/payment');
+         |                     ^
+      22 |     expect(typeof payment.validateChallanNumbers).toBe('function');
+      23 |   });
+      24 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:21:21)
+
+  ● CI/CD Component Verification › should have generateCacheKey function accessible
+
+    Cannot find module '../bigquery/cache' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      24 |
+      25 |   test('should have generateCacheKey function accessible', () => {
+    > 26 |     const cache = require('../bigquery/cache');
+         |                   ^
+      27 |     expect(typeof cache.generateCacheKey).toBe('function');
+      28 |   });
+      29 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:26:19)
+
+  ● CI/CD Component Verification › should have calculateSnoozeUntil function accessible
+
+    Cannot find module '../functions/snooze' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      29 |
+      30 |   test('should have calculateSnoozeUntil function accessible', () => {
+    > 31 |     const snooze = require('../functions/snooze');
+         |                    ^
+      32 |     expect(typeof snooze.calculateSnoozeUntil).toBe('function');
+      33 |   });
+      34 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:31:20)
+
+  ● CI/CD Component Verification › should have cloudbuild.yaml file
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      37 |     const path = require('path');
+      38 |     const cloudbuildPath = path.join(__dirname, '../cloudbuild.yaml');
+    > 39 |     expect(fs.existsSync(cloudbuildPath)).toBe(true);
+         |                                           ^
+      40 |   });
+      41 |
+      42 |   test('should have required test scripts in package.json', () => {
+
+      at Object.toBe (github result/tests/unit/ci_cd_verification.test.js:39:43)
+
+  ● CI/CD Component Verification › should have required test scripts in package.json
+
+    Cannot find module '../package.json' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      41 |
+      42 |   test('should have required test scripts in package.json', () => {
+    > 43 |     const packageJson = require('../package.json');
+         |                         ^
+      44 |     const requiredScripts = ['test:unit', 'test:integration'];
+      45 |     requiredScripts.forEach(script => {
+      46 |       expect(packageJson.scripts[script]).toBeDefined();
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:43:25)
+
+PASS tests/unit/simple.test.js
+PASS tests/unit/error_handling.test.js (6.242 s)
+  ● Console
+
+    console.error
+      Error in mockConstructor: Error: Test error
+          at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/error_handling.test.js:30:50)
+          at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)
+          at new Promise (<anonymous>)
+          at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)
+          at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)
+          at processTicksAndRejections (node:internal/process/task_queues:95:5)
+          at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)
+          at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)
+          at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+          at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+          at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)
+          at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)
+          at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)
+
+      22 |       return await fn(...args);
+      23 |     } catch (error) {
+    > 24 |       console.error(`Error in ${fn.name}:`, error);
+         |               ^
+      25 |       
+      26 |       // Log error details
+      27 |       logErrorDetails(error, args);
+
+      at error (functions/error_handling.js:24:15)
+      at Object.<anonymous> (tests/unit/error_handling.test.js:33:22)
+
+    console.error
+      Error details: {
+        "timestamp": "2025-08-28T07:05:14.054Z",
+        "errorMessage": "Test error",
+        "errorStack": "Error: Test error\n    at Object.<anonymous> (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/tests/unit/error_handling.test.js:30:50)\n    at Promise.then.completed (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:298:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/utils.js:231:10)\n    at _callCircusTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:316:40)\n    at processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at _runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:252:3)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:126:9)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)\n    at _runTestsForDescribeBlock (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:121:9)\n    at run (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/run.js:71:3)\n    at runAndTransformResultsToJestFormat (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)\n    at jestAdapter (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)\n    at runTestInternal (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:367:16)\n    at runTest (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/runTest.js:444:34)\n    at Object.worker (/home/runner/work/-bigquery-telegram-bot/-bigquery-telegram-bot/node_modules/jest-runner/build/testWorker.js:106:12)",
+        "functionName": "unknown",
+        "arguments": [
+          "arg1",
+          "arg2"
+        ]
+      }
+
+      53 |     };
+      54 |     
+    > 55 |     console.error('Error details:', JSON.stringify(errorInfo, null, 2));
+         |             ^
+      56 |   } catch (logError) {
+      57 |     console.error('Error logging error details:', logError);
+      58 |   }
+
+      at error (functions/error_handling.js:55:13)
+      at logErrorDetails (functions/error_handling.js:27:7)
+      at Object.<anonymous> (tests/unit/error_handling.test.js:33:22)
+
+    console.log
+      Attempt 1 failed. Retrying in 685.1780919141781ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1037.9415249574085ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 1 failed. Retrying in 706.2782195610258ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1636.3306952651217ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 1 failed. Retrying in 752.943592839454ms...
+
+      at log (functions/error_handling.js:97:15)
+
+    console.log
+      Attempt 2 failed. Retrying in 1175.3810716374219ms...
+
+      at log (functions/error_handling.js:97:15)
+
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Summary of all failing tests
+FAIL github result/tests/unit/error_handling.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/error_handling' from 'github result/tests/unit/error_handling.test.js'
+
+      13 |   generateUserFriendlyErrorMessage,
+      14 |   CircuitBreaker
+    > 15 | } = require('../../functions/error_handling');
+         |     ^
+      16 |
+      17 | describe('Error Handling Functionality', () => {
+      18 |   describe('withErrorHandling', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/error_handling.test.js:15:5)
+
+FAIL github result/tests/unit/remarks.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/remarks' from 'github result/tests/unit/remarks.test.js'
+
+      31 |   getPendingRemarksForManager,
+      32 |   generateManagerReviewMessage
+    > 33 | } = require('../../functions/remarks');
+         |     ^
+      34 |
+      35 | describe('Remarks Functionality', () => {
+      36 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/remarks.test.js:33:5)
+
+FAIL github result/tests/unit/remarks_integration.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/remarks_integration.test.js'
+
+      24 | Firestore.mockImplementation(() => mockFirestore);
+      25 |
+    > 26 | const { validateChallanNumbers } = require('../../functions/payment');
+         |                                    ^
+      27 | const { 
+      28 |   extractRemarks, 
+      29 |   storeRemarksForReview,
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/remarks_integration.test.js:26:36)
+
+FAIL github result/tests/unit/microbatching.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../bigquery/microbatching' from 'github result/tests/unit/microbatching.test.js'
+
+      18 | BigQuery.mockImplementation(() => mockBigQuery);
+      19 |
+    > 20 | const { insertRecord, flushBatch, flushAllBatches } = require('../../bigquery/microbatching');
+         |                                                       ^
+      21 |
+      22 | describe('Microbatching Functionality', () => {
+      23 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/microbatching.test.js:20:55)
+
+FAIL github result/tests/unit/security.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/security' from 'github result/tests/unit/security.test.js'
+
+      23 |   validateInputPattern,
+      24 |   sanitizeCallbackData 
+    > 25 | } = require('../../functions/security');
+         |     ^
+      26 |
+      27 | describe('Security Functionality', () => {
+      28 |   beforeEach(() => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/security.test.js:25:5)
+
+FAIL github result/tests/unit/cache.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../bigquery/cache' from 'github result/tests/unit/cache.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { generateCacheKey } = require('../../bigquery/cache');
+         |                              ^
+      11 |
+      12 | // Mock BigQuery
+      13 | jest.mock('@google-cloud/bigquery');
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/cache.test.js:10:30)
+
+FAIL github result/tests/unit/snooze.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/snooze' from 'github result/tests/unit/snooze.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { calculateSnoozeUntil, generateSnoozeConfirmation } = require('../../functions/snooze');
+         |                                                              ^
+      11 |
+      12 | describe('Snooze Functionality', () => {
+      13 |   describe('calculateSnoozeUntil', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/snooze.test.js:10:62)
+
+FAIL github result/tests/unit/payment.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/payment.test.js'
+
+       8 | // =============================================
+       9 |
+    > 10 | const { validateChallanNumbers, generateChallanValidationError } = require('../../functions/payment');
+         |                                                                    ^
+      11 |
+      12 | describe('Payment Workflow Functions', () => {
+      13 |   describe('validateChallanNumbers', () => {
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/payment.test.js:10:68)
+
+FAIL tests/unit/ci_cd_verification.test.js
+  ● Test suite failed to run
+
+    Your test suite must contain at least one test.
+
+      at onResult (node_modules/@jest/core/build/TestScheduler.js:133:18)
+      at node_modules/@jest/core/build/TestScheduler.js:254:19
+      at node_modules/emittery/index.js:363:13
+          at Array.map (<anonymous>)
+      at Emittery.emit (node_modules/emittery/index.js:361:23)
+
+FAIL github result/tests/unit/simple.test.js
+  ● Test suite failed to run
+
+    Cannot find module '../../functions/payment' from 'github result/tests/unit/simple.test.js'
+
+      1 | // Simple test to verify the setup
+    > 2 | const { validateChallanNumbers } = require('../../functions/payment');
+        |                                    ^
+      3 |
+      4 | test('validateChallanNumbers should work correctly', () => {
+      5 |   const result = validateChallanNumbers('CH-2023-1001');
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/simple.test.js:2:36)
+
+FAIL github result/tests/unit/ci_cd_verification.test.js
+  ● CI/CD Component Verification › should import payment module successfully
+
+    Cannot find module '../functions/payment' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      4 | describe('CI/CD Component Verification', () => {
+      5 |   test('should import payment module successfully', () => {
+    > 6 |     const payment = require('../functions/payment');
+        |                     ^
+      7 |     expect(payment).toBeDefined();
+      8 |   });
+      9 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:6:21)
+
+  ● CI/CD Component Verification › should import snooze module successfully
+
+    Cannot find module '../functions/snooze' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+       9 |
+      10 |   test('should import snooze module successfully', () => {
+    > 11 |     const snooze = require('../functions/snooze');
+         |                    ^
+      12 |     expect(snooze).toBeDefined();
+      13 |   });
+      14 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:11:20)
+
+  ● CI/CD Component Verification › should import cache module successfully
+
+    Cannot find module '../bigquery/cache' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      14 |
+      15 |   test('should import cache module successfully', () => {
+    > 16 |     const cache = require('../bigquery/cache');
+         |                   ^
+      17 |     expect(cache).toBeDefined();
+      18 |   });
+      19 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:16:19)
+
+  ● CI/CD Component Verification › should have validateChallanNumbers function accessible
+
+    Cannot find module '../functions/payment' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      19 |
+      20 |   test('should have validateChallanNumbers function accessible', () => {
+    > 21 |     const payment = require('../functions/payment');
+         |                     ^
+      22 |     expect(typeof payment.validateChallanNumbers).toBe('function');
+      23 |   });
+      24 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:21:21)
+
+  ● CI/CD Component Verification › should have generateCacheKey function accessible
+
+    Cannot find module '../bigquery/cache' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      24 |
+      25 |   test('should have generateCacheKey function accessible', () => {
+    > 26 |     const cache = require('../bigquery/cache');
+         |                   ^
+      27 |     expect(typeof cache.generateCacheKey).toBe('function');
+      28 |   });
+      29 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:26:19)
+
+  ● CI/CD Component Verification › should have calculateSnoozeUntil function accessible
+
+    Cannot find module '../functions/snooze' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      29 |
+      30 |   test('should have calculateSnoozeUntil function accessible', () => {
+    > 31 |     const snooze = require('../functions/snooze');
+         |                    ^
+      32 |     expect(typeof snooze.calculateSnoozeUntil).toBe('function');
+      33 |   });
+      34 |
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:31:20)
+
+  ● CI/CD Component Verification › should have cloudbuild.yaml file
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      37 |     const path = require('path');
+      38 |     const cloudbuildPath = path.join(__dirname, '../cloudbuild.yaml');
+    > 39 |     expect(fs.existsSync(cloudbuildPath)).toBe(true);
+         |                                           ^
+      40 |   });
+      41 |
+      42 |   test('should have required test scripts in package.json', () => {
+
+      at Object.toBe (github result/tests/unit/ci_cd_verification.test.js:39:43)
+
+  ● CI/CD Component Verification › should have required test scripts in package.json
+
+    Cannot find module '../package.json' from 'github result/tests/unit/ci_cd_verification.test.js'
+
+      41 |
+      42 |   test('should have required test scripts in package.json', () => {
+    > 43 |     const packageJson = require('../package.json');
+         |                         ^
+      44 |     const requiredScripts = ['test:unit', 'test:integration'];
+      45 |     requiredScripts.forEach(script => {
+      46 |       expect(packageJson.scripts[script]).toBeDefined();
+
+      at Resolver._throwModNotFoundError (node_modules/jest-resolve/build/resolver.js:427:11)
+      at Object.require (github result/tests/unit/ci_cd_verification.test.js:43:25)
+
+
+Test Suites: 11 failed, 13 passed, 24 total
+Tests:       8 failed, 132 passed, 140 total
+Snapshots:   0 total
+Time:        7.553 s
+Ran all test suites matching /tests\/unit/i.
+Error: Process completed with exit code 1.
