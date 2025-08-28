@@ -1,6 +1,11 @@
+const path = require('path');
+const __dirname = path.dirname(__filename);
+const projectRoot = path.join(__dirname, '..');
+
 const testModuleImport = (moduleName, modulePath) => {
   try {
-    const module = require(modulePath);
+    const fullPath = path.join(projectRoot, modulePath);
+    const module = require(fullPath);
     console.log(`? ${moduleName} module imports successfully`);
     return true;
   } catch (error) {
@@ -10,9 +15,9 @@ const testModuleImport = (moduleName, modulePath) => {
 };
 
 // Test all modules
-const paymentSuccess = testModuleImport('Payment', './functions/payment');
-const snoozeSuccess = testModuleImport('Snooze', './functions/snooze');
-const cacheSuccess = testModuleImport('Cache', './bigquery/cache');
+const paymentSuccess = testModuleImport('Payment', 'functions/payment');
+const snoozeSuccess = testModuleImport('Snooze', 'functions/snooze');
+const cacheSuccess = testModuleImport('Cache', 'bigquery/cache');
 
 // Exit with appropriate code
 if (paymentSuccess && snoozeSuccess && cacheSuccess) {
