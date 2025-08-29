@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 /**
  * GitHub Actions Setup Verification (Corrected Version)

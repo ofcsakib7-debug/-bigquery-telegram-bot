@@ -1,4 +1,3 @@
-const path = require('path');
 #!/usr/bin/env node
 
 /**

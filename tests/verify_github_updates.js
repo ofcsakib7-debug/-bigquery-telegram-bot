@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 /**
  * Verify GitHub Actions Updates
