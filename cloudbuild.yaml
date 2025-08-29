@@ -55,21 +55,20 @@ steps:
   - functions
   - deploy
   - telegram-bot
+  - --runtime=nodejs20
   - --region=us-central1
   - --source=.
-  - --trigger-http
-  - --runtime=nodejs20
   - --entry-point=bot
-  - --service-account=telegram-bot-project-470513@appspot.gserviceaccount.com
-  - --set-env-vars=BOT_TOKEN=${_BOT_TOKEN},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},BIGQUERY_DATASET_ID=${_BIGQUERY_DATASET_ID}
-  - --gen2
+  - --trigger-http
   - --allow-unauthenticated
   - --service-account=telegram-bot-project-470513@appspot.gserviceaccount.com
+  - --memory=256MB
+  - --timeout=30s
+  - --set-env-vars=NODE_ENV=production
   entrypoint: gcloud
   id: Deploy to Cloud Functions
   name: gcr.io/google.com/cloudsdktool/cloud-sdk
-  secretEnv:
-  - BOT_TOKEN
+  timeout: 1200s
 substitutions:
   _BIGQUERY_DATASET_ID: business_operations
   _SERVICE_ACCOUNT: your-service-account@${PROJECT_ID}.iam.gserviceaccount.com

@@ -1,98 +1,37 @@
-// === PHASE COMPLETION MARKER - DO NOT MODIFY ===
-// Design: 1
-// Phase: 1
-// Component: telegram_bot_main
-// Status: IN_PROGRESS
-// Last Modified: 2025-08-24 10:00 UTC
-// Next Step: Implement webhook verification and basic message handling
-// =============================================
+// telegram_bot/bot.js with debugging and Express setup
+console.log("telegram_bot/bot.js is being executed");
 
-const { Telegraf } = require('telegraf');
-const { PubSub } = require('@google-cloud/pubsub');
-const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
+try {
+  const express = require("express");
+  console.log("express required:", typeof express);
 
-// Load environment variables
-require('dotenv').config();
+  const app = express();
+  console.log("app created:", typeof app);
 
-// Initialize Telegram bot
-const bot = new Telegraf(process.env.BOT_TOKEN);
+  // Middleware to parse JSON bodies
+  app.use(express.json());
+  console.log("JSON middleware added");
 
-// Initialize Pub/Sub client
-const pubsub = new PubSub();
-const topicName = process.env.PUBSUB_TOPIC_NAME || 'telegram-messages';
+  // Health check endpoint
+  app.get("/health", (req, res) => {
+    console.log("Health check endpoint called");
+    res.status(200).send("OK");
+  });
 
-// Initialize Secret Manager client
-const secretManager = new SecretManagerServiceClient();
+  // Webhook endpoint for Telegram
+  app.post("/webhook", (req, res) => {
+    console.log("Webhook endpoint called");
+    console.log("Request body:", req.body);
+    // Your existing bot logic here
+    res.status(200).send("Webhook received");
+  });
 
-/**
- * Verify webhook signature using X-Telegram-Bot-Api-Secret-Token header
- * @param {Object} req - HTTP request object
- * @returns {boolean} - True if signature is valid
- */
-function verifyWebhookSignature(req) {
-  const secretToken = req.header('X-Telegram-Bot-Api-Secret-Token');
-  return secretToken === process.env.WEBHOOK_SECRET_TOKEN;
+  console.log("Routes set up");
+
+  // Export the Express app
+  module.exports = app;
+  console.log("app exported successfully");
+} catch (error) {
+  console.error("Error in bot.js:", error);
+  console.error("Stack trace:", error.stack);
 }
-
-/**
- * Push message to Pub/Sub for asynchronous processing
- * @param {Object} message - Telegram message object
- * @param {string} userId - Telegram user ID
- */
-async function pushMessageToPubSub(message, userId) {
-  try {
-    const dataBuffer = Buffer.from(JSON.stringify({
-      message,
-      userId,
-      timestamp: new Date().toISOString()
-    }));
-
-    const messageId = await pubsub.topic(topicName).publishMessage({ data: dataBuffer });
-    console.log(`Message ${messageId} published to Pub/Sub`);
-  } catch (error) {
-    console.error('Error publishing message to Pub/Sub:', error);
-  }
-}
-
-// Webhook endpoint for Telegram
-bot.on('message', async (ctx) => {
-  try {
-    // Send instant acknowledgment
-    await ctx.reply('Processing your request...');
-    
-    // Push message to Pub/Sub for asynchronous processing
-    await pushMessageToPubSub(ctx.message, ctx.from.id);
-  } catch (error) {
-    console.error('Error handling message:', error);
-    await ctx.reply('Sorry, there was an error processing your request. Please try again.');
-  }
-});
-
-// Handle callback queries (button presses)
-bot.on('callback_query', async (ctx) => {
-  try {
-    // Send instant acknowledgment
-    await ctx.answerCbQuery('Processing your request...');
-    
-    // Push callback query to Pub/Sub for asynchronous processing
-    await pushMessageToPubSub(ctx.callbackQuery, ctx.from.id);
-  } catch (error) {
-    console.error('Error handling callback query:', error);
-    await ctx.answerCbQuery('Sorry, there was an error processing your request.');
-  }
-});
-
-// Start command
-bot.start((ctx) => {
-  ctx.reply('Welcome to the Business Management Bot! Processing your request...');
-  pushMessageToPubSub({ text: '/start' }, ctx.from.id);
-});
-
-// Help command
-bot.help((ctx) => {
-  ctx.reply('This is a business management bot. Use the buttons to navigate through options.');
-  pushMessageToPubSub({ text: '/help' }, ctx.from.id);
-});
-
-// Export for Cloud Functions
-module.exports = bot;
