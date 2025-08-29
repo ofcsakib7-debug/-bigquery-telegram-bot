@@ -5,16 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "jest",
-    "test:unit": "jest tests/unit",
-    "test:integration": "jest tests/integration",
-    "test:verification": "node tests/system_verification.js",
+    "test:unit": "jest tests/unit --detectOpenHandles --forceExit",
+    "test:integration": "jest tests/integration --detectOpenHandles --forceExit --verbose",
+    "test:verification": "jest tests/unit tests/integration --detectOpenHandles --forceExit",
     "test:design6": "jest tests/unit/search_validation.test.js",
     "test:design7": "jest tests/unit/error_detection.test.js",
     "test:design6-design7": "node tests/test_design6_design7.js",
     "verify": "node verify_system.js",
     "start": "node index.js",
     "init": "node init.js",
-    "test:e2e": "echo \"No e2e tests configured\""
+    "test:e2e": "jest tests/e2e --detectOpenHandles --forceExit"
   },
   "keywords": [
     "telegram",
@@ -40,13 +40,8 @@
     "@google-cloud/functions-framework": "^3.3.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
-  },
-  "jest": {
-    "setupFilesAfterEnv": [
-      "./tests/setup.js"
-    ],
-    "testTimeout": 30000
+    "jest": "^29.7.0",
+    "@jest/globals": "^29.7.0"
   },
   "engines": {
     "node": "20"
