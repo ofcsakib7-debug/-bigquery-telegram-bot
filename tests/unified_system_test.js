@@ -14,22 +14,22 @@ function safeImport(modulePath) {
 }
 
 const modulesToTest = [
-  './functions/payment',
-  './functions/snooze',
-  './bigquery/cache',
-  './functions/search_validation',
-  './functions/error_detection',
-  './functions/admin_management',
-  './functions/contextual_actions',
-  './functions/multi_input_processor',
-  './functions/department_validations',
-  './bigquery/quota_saving',
-  './bigquery/scheduled_queries',
-  './bigquery/design8_schemas',
-  './bigquery/design9_schemas',
-  './bigquery/design10_schemas',
-  './bigquery/design11_schemas',
-  './bigquery/design12_schemas'
+  'functions/payment',
+  'functions/snooze',
+  'bigquery/cache',
+  'functions/search_validation',
+  'functions/error_detection',
+  'functions/admin_management',
+  'functions/contextual_actions',
+  'functions/multi_input_processor',
+  'functions/department_validations',
+  'bigquery/quota_saving',
+  'bigquery/scheduled_queries',
+  'bigquery/design8_schemas',
+  'bigquery/design9_schemas',
+  'bigquery/design10_schemas',
+  'bigquery/design11_schemas',
+  'bigquery/design12_schemas'
 ];
 
 console.log('=== Unified System Integration Test ===');
@@ -46,7 +46,7 @@ modulesToTest.forEach(modPath => {
 
 // Example workflow tests
 try {
-  const payment = safeImport('./functions/payment');
+  const payment = safeImport('functions/payment');
   assert(payment && typeof payment.validateChallanNumbers === 'function', 'validateChallanNumbers missing');
   const result = payment.validateChallanNumbers('CH-2023-1001');
   assert(result && result.valid === true, 'Payment validation failed');
@@ -57,7 +57,7 @@ try {
 }
 
 try {
-  const snooze = safeImport('./functions/snooze');
+  const snooze = safeImport('functions/snooze');
   assert(snooze && typeof snooze.calculateSnoozeUntil === 'function', 'calculateSnoozeUntil missing');
   const snoozeResult = snooze.calculateSnoozeUntil('1h');
   assert(snoozeResult instanceof Date, 'Snooze calculation failed');
@@ -68,7 +68,7 @@ try {
 }
 
 try {
-  const cache = safeImport('./bigquery/cache');
+  const cache = safeImport('bigquery/cache');
   assert(cache && typeof cache.generateCacheKey === 'function', 'generateCacheKey missing');
   const cacheKey = cache.generateCacheKey('department_options','user123','finance');
   assert(typeof cacheKey === 'string', 'Cache key generation failed');
