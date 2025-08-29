@@ -1,3 +1,4 @@
+const { cleanupBigQuery } = require('./bigquery_helper');
 // === PHASE COMPLETION MARKER - DO NOT MODIFY ===
 // Design: Testing
 // Phase: 1
@@ -117,4 +118,8 @@ describe('Cache Functionality', () => {
       expect(timeDifference).toBeLessThan(1000);
     });
   });
+});
+// Cleanup after each test
+afterEach(async () => {
+  await cleanupBigQuery();
 });

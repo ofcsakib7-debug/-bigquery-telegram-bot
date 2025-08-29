@@ -1,4 +1,4 @@
-const { cleanupBigQuery } = require('./bigquery_helper');
+const { cleanupBigQuery } = require('../bigquery_helper');
 // === PHASE COMPLETION MARKER - DO NOT MODIFY ===
 // Design: Testing
 // Phase: 1
@@ -156,6 +156,15 @@ describe('Microbatching Functionality', () => {
   });
 });
 // Cleanup after each test
+
+// Clean up microbatching timers
+afterEach(() => {
+  // Clear any remaining intervals
+  const highestId = setInterval(() => {}, 0);
+  for (let i = 0; i < highestId; i++) {
+    clearInterval(i);
+  }
+});
 afterEach(async () => {
   await cleanupBigQuery();
 });

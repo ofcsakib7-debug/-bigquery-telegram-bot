@@ -1,4 +1,4 @@
-const { cleanupBigQuery } = require('./bigquery_helper');
+const { cleanupBigQuery } = require('../bigquery_helper');
 // === PHASE COMPLETION MARKER - DO NOT MODIFY ===
 // Design: Testing
 // Phase: 1
