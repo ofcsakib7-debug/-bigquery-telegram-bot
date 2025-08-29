@@ -1,6 +1,6 @@
-# Continuation Prompt Template Implementation
+# Continuation Prompt Template
 
-## Continuation Prompt Template Structure (Max 150 tokens):
+## Continuation Prompt Structure (Max 150 tokens):
 
 ```markdown
 RESUME DEVELOPMENT (150 tokens max)

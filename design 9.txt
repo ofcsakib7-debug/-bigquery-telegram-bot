@@ -1,0 +1,506 @@
+Design 9, Phase 1: Role-Based Access Control System with Department-Specific Menus Prompt for Qwen Coder
+Create the foundational architecture for a role-based access control system that provides department-specific menus with add/edit/delete functionality according to user designation, time-based editing restrictions, and hierarchical approval workflows. Implement exactly as specified with no interpretation or deviation.
+Core System Requirements
+1. User Role Hierarchy Structure
+Implementation Requirements:
+•	Must implement 7-tier role hierarchy with strict permissions:
+1.	Admin: Full system access (add/delete/edit all)
+2.	CEO: Read all, limited edit/delete with audit trail
+3.	General Manager: Read department + sub-departments, edit/delete within department
+4.	Department Manager: Read department, edit/delete within department
+5.	Junior Manager: Read department, edit within 2 days of creation
+6.	Staff: Read department, add only (edit within 2 hours of creation)
+7.	ReadOnly: Read only access (external partners, auditors)
+•	Must enforce time-based editing restrictions:
+•	Staff: Edit within 2 hours of creation only
+•	Junior Manager: Edit within 2 days of creation only
+•	All others: Edit within 7 days of creation (with audit trail)
+•	NEVER allow deletion of original records (append-only journal pattern)
+•	Must implement approval workflows:
+•	Staff edits after 2 hours require Junior Manager approval
+•	Junior Manager edits after 2 days require Department Manager approval
+•	Department Manager edits after 7 days require General Manager approval
+Critical Implementation Rules:
+•	All user interactions must use the "Don't Type, Tap" philosophy (predefined buttons)
+•	Never allow direct deletion of records (use status flags instead)
+•	All edits must create new records with audit trail (event sourcing pattern)
+•	Must check user role before processing any action
+•	Must implement automatic escalation for pending approvals
+2. User Permissions Management System
+Table Name: user_permissions
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.user_permissions` (
+  permission_id STRING NOT NULL,  -- Format: PERM-{ROLE}-{RESOURCE}-{3-random}
+  role_id STRING NOT NULL,  -- Values: ADMIN, CEO, GM, DM, JM, STAFF, READONLY
+  resource_type STRING NOT NULL,  -- Values: DEPARTMENT, USER, PAYMENT, INVENTORY, etc.
+  resource_id STRING,  -- Specific resource ID (NULL for all)
+  can_read BOOL NOT NULL,
+  can_add BOOL NOT NULL,
+  can_edit BOOL NOT NULL,
+  can_delete BOOL NOT NULL,
+  time_limit_hours INT64,  -- Time limit for editing (NULL = no limit)
+  requires_approval_for_edit BOOL NOT NULL,
+  requires_approval_for_delete BOOL NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY role_id, resource_type, can_edit
+OPTIONS(
+  description="User permissions management with time-based restrictions"
+);
+Implementation Rules:
+•	permission_id must follow exact format: PERM-DM-INVENTORY-ABC
+•	time_limit_hours must be NULL for Admin/CEO roles
+•	time_limit_hours must be 2 for Staff role (edit window)
+•	time_limit_hours must be 48 for Junior Manager role (edit window)
+•	created_at and updated_at must use UTC timezone
+•	Implement data expiration: 36 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include role_id as first field
+Default Permissions Configuration:
+sql
+-- Staff permissions (example)
+INSERT INTO `project.dataset.user_permissions` VALUES
+('PERM-STAFF-INVENTORY-ABC', 'STAFF', 'INVENTORY', NULL, TRUE, TRUE, TRUE, FALSE, 2, TRUE, TRUE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+('PERM-STAFF-PAYMENT-DEF', 'STAFF', 'PAYMENT', NULL, TRUE, TRUE, TRUE, FALSE, 2, TRUE, TRUE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
+-- Junior Manager permissions (example)
+INSERT INTO `project.dataset.user_permissions` VALUES
+('PERM-JM-INVENTORY-GHI', 'JM', 'INVENTORY', NULL, TRUE, TRUE, TRUE, FALSE, 48, FALSE, TRUE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+('PERM-JM-PAYMENT-JKL', 'JM', 'PAYMENT', NULL, TRUE, TRUE, TRUE, FALSE, 48, FALSE, TRUE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+3. Department-Specific Menu System
+Table Name: department_menus
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.department_menus` (
+  menu_id STRING NOT NULL,  -- Format: MENU-{DEPT}-{ROLE}-{3-random}
+  department_id STRING NOT NULL,  -- Values: FINANCE, INVENTORY, SERVICE, SALES, HR, MANAGEMENT
+  role_id STRING NOT NULL,  -- Values: ADMIN, CEO, GM, DM, JM, STAFF, READONLY
+  menu_name STRING NOT NULL,
+  menu_structure JSON NOT NULL,  -- JSON structure of the menu
+  can_add BOOL NOT NULL,
+  can_edit BOOL NOT NULL,
+  can_delete BOOL NOT NULL,
+  time_limit_hours INT64,  -- Time limit for editing (NULL = no limit)
+  requires_approval_for_edit BOOL NOT NULL,
+  requires_approval_for_delete BOOL NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY department_id, role_id, can_edit
+OPTIONS(
+  description="Department-specific menus with role-based access control"
+);
+Implementation Rules:
+•	menu_id must follow exact format: MENU-INV-STAFF-ABC
+•	menu_structure must follow Telegram inline keyboard format
+•	time_limit_hours must match role permissions
+•	created_at and updated_at must use UTC timezone
+•	Implement data expiration: 24 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+Example Menu Structure:
+json
+{
+  "main_menu": {
+    "title": "Inventory Management",
+    "buttons": [
+      {
+        "text": "1?? View Stock Levels",
+        "callback_data": "menu:inventory:stock"
+      },
+      {
+        "text": "2?? Receive New Items",
+        "callback_data": "menu:inventory:receive"
+      },
+      {
+        "text": "3?? Transfer Between Branches",
+        "callback_data": "menu:inventory:transfer"
+      }
+    ]
+  },
+  "receive_menu": {
+    "title": "Receive New Items",
+    "buttons": [
+      {
+        "text": "? Add New Item",
+        "callback_data": "action:inventory:add"
+      },
+      {
+        "text": "?? Edit Existing Item",
+        "callback_data": "action:inventory:edit"
+      },
+      {
+        "text": "??? Delete Item",
+        "callback_data": "action:inventory:delete"
+      }
+    ]
+  }
+}
+4. Audit Trail System
+Table Name: audit_trails
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.audit_trails` (
+  audit_id STRING NOT NULL,  -- Format: AUDIT-{YYYYMMDD}-{3-random}
+  original_record_id STRING NOT NULL,
+  action_type STRING NOT NULL,  -- Values: CREATE, EDIT, DELETE, APPROVE
+  user_id STRING NOT NULL,
+  role_id STRING NOT NULL,
+  department_id STRING NOT NULL,
+  timestamp TIMESTAMP NOT NULL,
+  old_value JSON,
+  new_value JSON,
+  approval_required BOOL NOT NULL,
+  approval_status STRING,  -- Values: PENDING, APPROVED, REJECTED
+  approved_by STRING,
+  approved_timestamp TIMESTAMP,
+  reason_for_change STRING,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(timestamp)
+CLUSTER BY department_id, action_type, approval_status
+OPTIONS(
+  description="Comprehensive audit trail for all record changes"
+);
+Implementation Rules:
+•	audit_id must follow exact format: AUDIT-20231110-ABC
+•	approval_status must be NULL if approval_required = FALSE
+•	timestamp must use UTC timezone
+•	Implement data expiration: 36 months after timestamp
+•	Partitioning must be on DATE(timestamp), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+Critical Implementation Rules:
+•	All edits must create a new audit trail record
+•	Never modify original records (append-only journal pattern)
+•	Must capture both old_value and new_value for edits
+•	Must track approval workflow for time-expired edits
+•	Must automatically escalate pending approvals
+5. Approval Workflow System
+Table Name: approval_workflows
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.approval_workflows` (
+  workflow_id STRING NOT NULL,  -- Format: WF-{ACTION}-{3-random}
+  action_type STRING NOT NULL,  -- Values: EDIT, DELETE
+  resource_type STRING NOT NULL,
+  from_role STRING NOT NULL,
+  to_role STRING NOT NULL,
+  time_threshold_hours INT64 NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY action_type, resource_type, from_role
+OPTIONS(
+  description="Approval workflow definitions based on time thresholds"
+);
+Implementation Rules:
+•	workflow_id must follow exact format: WF-EDIT-INVENTORY-ABC
+•	time_threshold_hours must be 2 for Staff -> Junior Manager
+•	time_threshold_hours must be 48 for Junior Manager -> Department Manager
+•	created_at must use UTC timezone
+•	Implement data expiration: 24 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include action_type as first field
+Default Workflow Configuration:
+sql
+-- Staff to Junior Manager approval
+INSERT INTO `project.dataset.approval_workflows` VALUES
+('WF-EDIT-INVENTORY-ABC', 'EDIT', 'INVENTORY', 'STAFF', 'JM', 2, CURRENT_TIMESTAMP()),
+('WF-EDIT-PAYMENT-DEF', 'EDIT', 'PAYMENT', 'STAFF', 'JM', 2, CURRENT_TIMESTAMP());
+
+-- Junior Manager to Department Manager approval
+INSERT INTO `project.dataset.approval_workflows` VALUES
+('WF-EDIT-INVENTORY-GHI', 'EDIT', 'INVENTORY', 'JM', 'DM', 48, CURRENT_TIMESTAMP()),
+('WF-EDIT-PAYMENT-JKL', 'EDIT', 'PAYMENT', 'JM', 'DM', 48, CURRENT_TIMESTAMP());
+6. Department-Specific Menu Implementation
+Implementation Requirements:
+•	Must generate menus based on user role and department
+•	Must hide unavailable actions based on permissions
+•	Must show different options for time-expired edits
+•	Must include approval request options when needed
+•	Must implement the "Don't Type, Tap" philosophy
+Example: Inventory Menu for Staff Role:
+?? *Inventory Management*
+
+[Actions]
++------------------------------+
+¦ 1?? View Stock Levels        ¦
++------------------------------¦
+¦ 2?? Receive New Items        ¦
++------------------------------¦
+¦ 3?? Transfer Between Branches¦
++------------------------------+
+
+[Your Actions]
++------------------------------+
+¦ ? Add New Item               ¦
++------------------------------¦
+¦ ?? Edit Recent Items (2h)    ¦
++------------------------------¦
+¦ ?? Request Edit (Expired)    ¦
++------------------------------+
+Example: Inventory Menu for Junior Manager Role:
+?? *Inventory Management*
+
+[Actions]
++------------------------------+
+¦ 1?? View Stock Levels        ¦
++------------------------------¦
+¦ 2?? Receive New Items        ¦
++------------------------------¦
+¦ 3?? Transfer Between Branches¦
++------------------------------+
+
+[Your Actions]
++------------------------------+
+¦ ? Add New Item               ¦
++------------------------------¦
+¦ ?? Edit Items (48h)          ¦
++------------------------------¦
+¦ ?? Request Edit (Expired)    ¦
++------------------------------¦
+¦ ? Approve Requests          ¦
++------------------------------+
+Critical Implementation Rules:
+•	Must calculate time since record creation for each item
+•	Must show "Edit" option only for records within time limit
+•	Must show "Request Edit" option for expired records
+•	Must show "Approve Requests" option for managers
+•	Must implement snooze functionality for pending approvals
+7. Admin Management System
+Table Name: admin_management
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.admin_management` (
+  admin_id STRING NOT NULL,  -- Format: ADMIN-{ACTION}-{3-random}
+  action_type STRING NOT NULL,  -- Values: ADD_ROLE, EDIT_ROLE, DELETE_ROLE, ADD_USER, EDIT_USER, DELETE_USER
+  target_id STRING,  -- Role ID or User ID
+  target_name STRING,  -- Role name or User name
+  performed_by STRING NOT NULL,  -- User ID of admin performing action
+  timestamp TIMESTAMP NOT NULL,
+  status STRING NOT NULL,  -- Values: PENDING, COMPLETED, CANCELLED
+  details JSON,  -- Additional details specific to action type
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(timestamp)
+CLUSTER BY action_type, status
+OPTIONS(
+  description="Audit log for admin management actions"
+);
+Implementation Rules:
+•	admin_id must follow exact format: ADMIN-ADD_ROLE-ABC
+•	status must be one of 3 specified values only
+•	timestamp must use UTC timezone
+•	Implement data expiration: 36 months after timestamp
+•	Partitioning must be on DATE(timestamp), NOT _PARTITIONTIME
+•	Clustering must include action_type as first field
+Admin Command Processing Requirements:
+•	MUST verify user has admin privileges before processing
+•	MUST require confirmation for role/user management actions
+•	MUST show current permissions when editing roles
+•	MUST implement role inheritance (e.g., DM inherits JM permissions)
+•	MUST include audit trail for all admin actions
+Example Admin Flow:
+User: /admin
+
+?? *Admin Management*
+
+What would you like to manage?
+
+[Actions]
++------------------------------+
+¦ 1?? Manage Roles             ¦
++------------------------------¦
+¦ 2?? Manage Users             ¦
++------------------------------¦
+¦ 3?? View Audit Logs          ¦
++------------------------------+
+After Selecting "Manage Roles":
+?? *Role Management*
+
+Select action:
+
+[Actions]
++------------------------------+
+¦ 1?? Add New Role             ¦
++------------------------------¦
+¦ 2?? Edit Existing Role       ¦
++------------------------------¦
+¦ 3?? Delete Role              ¦
++------------------------------+
+After Selecting "Edit Existing Role":
+?? *Edit Role Permissions*
+
+Select role to edit:
+
+[Roles]
++------------------------------+
+¦ 1?? Staff                    ¦
++------------------------------¦
+¦ 2?? Junior Manager           ¦
++------------------------------¦
+¦ 3?? Department Manager       ¦
++------------------------------¦
+¦ 4?? General Manager          ¦
++------------------------------+
+8. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+•	NEVER query raw user_permissions or department_menus in user-facing requests
+•	ALWAYS filter by partitioning column first in all queries
+•	ALWAYS include at least one clustering column in WHERE clause
+•	Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+•	For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+•	NEVER use SELECT * - always specify exact columns needed
+B. Permission Checking Rules
+•	Layer 1 (Role Check):
+•	Must complete within 5ms
+•	Must use zero BigQuery quota
+•	Must validate user role from memory cache
+•	Must check department access
+•	Must return immediate error for unauthorized actions
+•	Layer 2 (Time Limit Check):
+•	Must complete within 10ms
+•	Must use zero BigQuery quota
+•	Must calculate time since record creation
+•	Must check time_limit_hours against current time
+•	Must return appropriate action options
+•	Layer 3 (Approval Workflow Check):
+•	Must complete within 50ms
+•	Must check cache first (90% hit rate target)
+•	Must use department-specific approval rules
+•	Must only query pre-aggregated tables
+•	Must limit to 100MB data scan per query
+C. Scheduled Query Requirements
+•	Create daily scheduled query for permission cache refresh at 02:00 Asia/Dhaka
+•	Create daily scheduled query for approval workflow monitoring at 03:00 Asia/Dhaka
+•	All scheduled queries must have appropriate partition filters
+•	All scheduled queries must have labels for quota monitoring
+•	All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+•	Implement CHECK constraints for all critical fields
+•	permission_id must follow exact format: PERM-ROLE-RESOURCE-ABC
+•	menu_id must follow exact format: MENU-DEPT-ROLE-ABC
+•	time_limit_hours must be NULL for Admin/CEO roles
+•	Implement automatic data quality checks as scheduled queries
+•	Validate role hierarchy using predefined rules
+E. Data Expiration Policies
+•	user_permissions: 36 months
+•	department_menus: 24 months
+•	audit_trails: 36 months
+•	approval_workflows: 24 months
+•	admin_management: 36 months
+9. Department-Specific Implementation Requirements
+A. Department-Specific Menu Requirements
+•	INVENTORY: Must include machine stock and service ticket menus
+sql
+SELECT
+  'MENU-INV-STAFF-ABC' AS menu_id,
+  'INVENTORY' AS department_id,
+  'STAFF' AS role_id,
+  'Inventory Management' AS menu_name,
+  '''{
+    "main_menu": {
+      "title": "Inventory Management",
+      "buttons": [
+        {"text": "1?? View Stock Levels", "callback_data": "menu:inventory:stock"},
+        {"text": "2?? Receive New Items", "callback_data": "menu:inventory:receive"},
+        {"text": "3?? Transfer Between Branches", "callback_data": "menu:inventory:transfer"}
+      ]
+    },
+    "receive_menu": {
+      "title": "Receive New Items",
+      "buttons": [
+        {"text": "? Add New Item", "callback_data": "action:inventory:add"},
+        {"text": "?? Edit Recent Item", "callback_data": "action:inventory:edit"},
+        {"text": "?? Request Edit (Expired)", "callback_data": "action:inventory:request_edit"}
+      ]
+    }
+  }''' AS menu_structure,
+  TRUE AS can_add,
+  TRUE AS can_edit,
+  FALSE AS can_delete,
+  2 AS time_limit_hours,
+  TRUE AS requires_approval_for_edit,
+  TRUE AS requires_approval_for_delete,
+  CURRENT_TIMESTAMP() AS created_at,
+  CURRENT_TIMESTAMP() AS updated_at
+•	FINANCE: Must include payment and expense menus
+sql
+SELECT
+  'MENU-FIN-STAFF-DEF' AS menu_id,
+  'FINANCE' AS department_id,
+  'STAFF' AS role_id,
+  'Finance Management' AS menu_name,
+  '''{
+    "main_menu": {
+      "title": "Finance Management",
+      "buttons": [
+        {"text": "1?? View Transactions", "callback_data": "menu:finance:transactions"},
+        {"text": "2?? Record Payment", "callback_data": "menu:finance:payment"},
+        {"text": "3?? Expense Report", "callback_data": "menu:finance:expense"}
+      ]
+    },
+    "payment_menu": {
+      "title": "Record Payment",
+      "buttons": [
+        {"text": "? Add New Payment", "callback_data": "action:finance:add"},
+        {"text": "?? Edit Recent Payment", "callback_data": "action:finance:edit"},
+        {"text": "?? Request Edit (Expired)", "callback_data": "action:finance:request_edit"}
+      ]
+    }
+  }''' AS menu_structure,
+  TRUE AS can_add,
+  TRUE AS can_edit,
+  FALSE AS can_delete,
+  2 AS time_limit_hours,
+  TRUE AS requires_approval_for_edit,
+  TRUE AS requires_approval_for_delete,
+  CURRENT_TIMESTAMP() AS created_at,
+  CURRENT_TIMESTAMP() AS updated_at
+B. Department-Specific Time Limit Rules
+•	INVENTORY:
+•	Staff: 2 hours for adding machine stock
+•	Junior Manager: 48 hours for editing machine specifications
+•	Department Manager: 7 days for inventory transfers
+•	FINANCE:
+•	Staff: 2 hours for adding payments
+•	Junior Manager: 48 hours for editing expense reports
+•	Department Manager: 7 days for financial adjustments
+C. Department-Specific Approval Workflows
+•	INVENTORY: Must include inventory-specific approval workflows
+sql
+SELECT
+  'WF-EDIT-INVENTORY-ABC' AS workflow_id,
+  'EDIT' AS action_type,
+  'INVENTORY' AS resource_type,
+  'STAFF' AS from_role,
+  'JM' AS to_role,
+  2 AS time_threshold_hours,
+  CURRENT_TIMESTAMP() AS created_at
+•	FINANCE: Must include finance-specific approval workflows
+sql
+SELECT
+  'WF-EDIT-FINANCE-DEF' AS workflow_id,
+  'EDIT' AS action_type,
+  'FINANCE' AS resource_type,
+  'STAFF' AS from_role,
+  'JM' AS to_role,
+  2 AS time_threshold_hours,
+  CURRENT_TIMESTAMP() AS created_at
+Critical Implementation Sequence
+1.	First, create the user_permissions table with exact partitioning and clustering
+2.	Then, create the department_menus table with exact partitioning and clustering
+3.	Next, create the audit_trails table with exact partitioning and clustering
+4.	After that, implement the approval_workflows table structure
+5.	Then, create the admin_management table structure
+6.	Finally, implement the role-based menu generation system
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the role-based access control system with department-specific menus. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+The system must be designed so that 90% of permission checks happen in Layer 1 and Layer 2 (zero BigQuery quota) and ALL menu options MUST be presented as tappable inline keyboard options.
+The system must enforce the 2-hour edit window for Staff roles and 48-hour edit window for Junior Manager roles, with automatic escalation to approval workflows when time limits expire.
+For Admins, the system must provide complete role and user management functionality through an intuitive, tappable interface with no typing required.
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.

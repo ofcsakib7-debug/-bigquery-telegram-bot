@@ -1,0 +1,377 @@
+Design 8, Phase 1: Multi-Input Command System with Contextual Navigation Prompt for Qwen Coder
+Create the foundational architecture for a multi-input command system that processes multiple data inputs in a single message, provides contextual navigation through tappable inline keyboard menus, and includes admin-specific functionality for department and user management. Implement exactly as specified with no interpretation or deviation.
+Core System Requirements
+1. Multi-Input Command Processing Engine
+Implementation Requirements:
+•	Must process space-separated segments as independent inputs within a single message
+•	Must complete primary processing within 500ms for user-facing responses
+•	Must implement department-specific parsing rules for each segment
+•	Must never process more than 5 segments per message
+•	Must return immediate acknowledgment with processing message before full processing
+•	ALL suggestions MUST be presented as tappable inline keyboard options
+•	Must use two-phase processing (immediate results + background alternatives)
+Critical Implementation Rules:
+•	Segment identification must use space as delimiter
+•	Must validate each segment against department-specific patterns
+•	Must prioritize department context when ambiguous inputs exist
+•	Must implement error prevention before data reaches BigQuery
+•	Must never require users to type corrections - only tap suggestions
+2. Command Patterns Table
+Table Name: command_patterns
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.command_patterns` (
+  pattern_id STRING NOT NULL,  -- Format: PATTERN-{DEPT}-{TYPE}-{3-random}
+  department_id STRING NOT NULL,  -- Values: ADMIN, FINANCE, INVENTORY, SERVICE, SALES, HR, MANAGEMENT
+  pattern_type STRING NOT NULL,  -- Values: INPUT, ADD, EDIT, DELETE, ADMIN
+  pattern STRING NOT NULL,  -- Regex pattern for validation
+  description STRING NOT NULL,
+  parsing_logic STRING NOT NULL,  -- How to extract values
+  sample_input STRING NOT NULL,
+  sample_output STRING NOT NULL,
+  priority_score FLOAT64 NOT NULL,  -- 0.0-1.0 scale (1.0 = highest priority)
+  usage_count INT64 DEFAULT 0,
+  last_used TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY department_id, pattern_type, priority_score
+OPTIONS(
+  description="Department-specific command patterns for multi-input processing"
+);
+Implementation Rules:
+•	pattern_id must follow exact format: PATTERN-INV-INPUT-ABC
+•	department_id must be one of the 7 specified values only
+•	pattern must be valid regex (2-20 characters)
+•	priority_score must be between 0.0 and 1.0 (1.0 = most frequently used)
+•	created_at and updated_at must use UTC timezone
+•	Implement data expiration: 36 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+Department-Specific Pattern Requirements:
+•	INVENTORY: Must include model quantity patterns (a2b=2)
+•	FINANCE: Must include payment amount patterns (p=5000)
+•	SERVICE: Must include ticket reference patterns (t=123)
+•	ADMIN: Must include department management patterns (adddept=HR)
+•	SALES: Must include customer and pricing patterns (cust=ABC, price=250)
+•	HR: Must include staff and attendance patterns (staff=123, att=PRESENT)
+•	MANAGEMENT: Must include reporting patterns (rpt=sales, period=cm)
+3. Pre-Listed Items Management System
+Table Name: prelisted_items
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.prelisted_items` (
+  item_id STRING NOT NULL,  -- Format: ITEM-{DEPT}-{TYPE}-{3-random}
+  department_id STRING NOT NULL,
+  item_type STRING NOT NULL,  -- Values: MACHINE, ACCOUNT, TECHNICIAN, DEPARTMENT, etc.
+  item_code STRING NOT NULL,  -- Short code for input (e.g., "a2b")
+  item_name STRING NOT NULL,
+  item_description STRING,
+  user_specific BOOL NOT NULL,
+  user_id STRING,  -- NULL for organization-wide items
+  usage_count INT64 DEFAULT 0,
+  last_used TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY department_id, item_type, user_specific
+OPTIONS(
+  description="Pre-listed items for department-specific input"
+);
+Implementation Rules:
+•	item_id must follow exact format: ITEM-INV-MACHINE-ABC
+•	item_code must be 2-4 alphanumeric characters
+•	user_specific must be TRUE for personal items, FALSE for organization-wide
+•	created_at and updated_at must use UTC timezone
+•	Implement data expiration: 24 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+4. Contextual Action Suggestion Engine
+Table Name: contextual_actions
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.contextual_actions` (
+  action_id STRING NOT NULL,  -- Format: ACTION-{DEPT}-{CONTEXT}-{3-random}
+  department_id STRING NOT NULL,
+  context_type STRING NOT NULL,  -- Values: RESULT, ERROR, EMPTY, etc.
+  primary_intent STRING NOT NULL,  -- The main intent of the current context
+  suggested_action STRING NOT NULL,  -- The action to suggest
+  action_text STRING NOT NULL,  -- Text to display on the button
+  action_data STRING NOT NULL,  -- Callback data for the button
+  confidence_score FLOAT64 NOT NULL,  -- 0.0-1.0 scale
+  usage_count INT64 DEFAULT 0,
+  last_used TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY department_id, context_type, primary_intent
+OPTIONS(
+  description="Contextual action suggestions for intelligent navigation"
+);
+Implementation Rules:
+•	action_id must follow exact format: ACTION-INV-ERROR-ABC
+•	action_data must follow exact format: ctx:{action_id}:{context_data}
+•	confidence_score must be between 0.0 and 1.0 (1.0 = highest confidence)
+•	created_at must use UTC timezone
+•	Implement data expiration: 12 months after created_at
+•	Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+•	Clustering must include department_id as first field
+Critical Implementation Rules for Inline Keyboard:
+•	MUST present all suggestions as tappable inline keyboard options
+•	MUST format as Telegram inline keyboard (max 2 buttons per row)
+•	MUST follow callback data format: ctx:{action_id}:{context_data}
+•	MUST include 2-4 actionable suggestions per response
+•	MUST sort suggestions by confidence_score (highest first)
+•	MUST always include "?? Back to Main Menu" option
+•	MUST include snooze options for non-urgent actions
+Example Inline Keyboard Structure:
+json
+{
+  "inline_keyboard": [
+    [{"text": "? Yes, Use This", "callback_data": "ctx:confirm:123"}],
+    [{"text": "?? Try Again", "callback_data": "ctx:retry:123"}],
+    [{"text": "? Finish coffee first (30 min)", "callback_data": "snooze:30m"}],
+    [{"text": "EndInit of work (5pm)", "callback_data": "snooze:work_end"}],
+    [{"text": "?? Back to Main Menu", "callback_data": "menu:main"}]
+  ]
+}
+5. Admin Management System
+Table Name: admin_management
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.admin_management` (
+  admin_id STRING NOT NULL,  -- Format: ADMIN-{ACTION}-{3-random}
+  action_type STRING NOT NULL,  -- Values: ADD_DEPT, DELETE_DEPT, EDIT_DEPT, LIST_USERS
+  target_id STRING,  -- Department ID or User ID
+  target_name STRING,  -- Department name or User name
+  performed_by STRING NOT NULL,  -- User ID of admin performing action
+  timestamp TIMESTAMP NOT NULL,
+  status STRING NOT NULL,  -- Values: PENDING, COMPLETED, CANCELLED
+  details JSON,  -- Additional details specific to action type
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(timestamp)
+CLUSTER BY action_type, status
+OPTIONS(
+  description="Audit log for admin management actions"
+);
+Implementation Rules:
+•	admin_id must follow exact format: ADMIN-ADD_DEPT-ABC
+•	status must be one of 3 specified values only
+•	timestamp must use UTC timezone
+•	Implement data expiration: 36 months after timestamp
+•	Partitioning must be on DATE(timestamp), NOT _PARTITIONTIME
+•	Clustering must include action_type as first field
+Admin Command Processing Requirements:
+•	MUST verify user has admin privileges before processing
+•	MUST require confirmation for destructive actions (delete)
+•	MUST provide tappable suggestions for similar items
+•	MUST include audit trail for all admin actions
+•	MUST implement department-specific validation rules
+Example Admin Flow:
+User: /admin
+
+?? *Admin Management*
+
+What would you like to manage?
+
+[Actions]
++------------------------------+
+¦ 1?? Add Department           ¦
++------------------------------¦
+¦ 2?? Edit Department          ¦
++------------------------------¦
+¦ 3?? Delete Department        ¦
++------------------------------¦
+¦ 4?? Manage Users             ¦
++------------------------------+
+6. BQML Training Data Infrastructure
+Table Name: bqml_training_contextual_actions
+Exact Schema Requirements:
+sql
+CREATE TABLE `project.dataset.bqml_training_contextual_actions` (
+  user_id STRING NOT NULL,
+  department_id STRING NOT NULL,
+  context_type STRING NOT NULL,
+  primary_intent STRING NOT NULL,
+  suggested_actions ARRAY<STRING> NOT NULL,
+  selected_action STRING NOT NULL,
+  hour_of_day STRING NOT NULL,  -- Format: "00"-"23"
+  day_of_week STRING NOT NULL,  -- Values: MONDAY, TUESDAY, ..., SUNDAY
+  user_role STRING NOT NULL,
+  confidence_score FLOAT64 NOT NULL,
+  training_date DATE NOT NULL
+)
+PARTITION BY training_date
+CLUSTER BY department_id, context_type, primary_intent
+OPTIONS(
+  description="Pre-aggregated contextual action data for BQML model training"
+);
+Implementation Rules:
+•	hour_of_day must be two-digit string from "00" to "23"
+•	day_of_week must be one of 7 specified values only
+•	training_date must be set to the date of aggregation
+•	Implement automatic data expiration: 90 days after training_date
+•	Must be rebuilt daily from contextual_action_interactions
+•	Partitioning must be on training_date, NOT timestamp
+Critical Implementation Details:
+•	Must be trained daily during off-peak hours (2AM-4AM Bangladesh time)
+•	Must use boosted tree classifier for pattern recognition
+•	Must include department_id as a categorical feature
+•	Must include hour_of_day and day_of_week as features
+•	Must include user_role as a feature
+•	Must only use data from the last 90 days
+•	Must validate model performance before deployment
+7. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+•	NEVER query raw command_patterns or contextual_actions in user-facing requests
+•	ALWAYS filter by partitioning column first in all queries
+•	ALWAYS include at least one clustering column in WHERE clause
+•	Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+•	For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+•	NEVER use SELECT * - always specify exact columns needed
+B. Multi-Input Processing Rules
+•	Layer 1 (Syntax Validation):
+•	Must complete within 5ms
+•	Must use zero BigQuery quota
+•	Must validate character set (alphanumeric + =)
+•	Must validate segment count (1-5 segments)
+•	Must validate segment format
+•	Layer 2 (Logical Validation):
+•	Must complete within 10ms
+•	Must use zero BigQuery quota
+•	Must validate department-specific patterns
+•	Must check for logical consistency
+•	Must validate quantities (1-99)
+•	Layer 3 (BQML Anomaly Detection):
+•	Must complete within 200ms
+•	Must check cache first (90% hit rate target)
+•	Must use department-specific BQML models
+•	Must only query pre-aggregated tables
+•	Must limit to 100MB data scan per query
+C. Scheduled Query Requirements
+•	Create daily scheduled query for bqml_training_contextual_actions at 02:00 Asia/Dhaka
+•	Create daily scheduled query for contextual_action_model retraining at 03:00 Asia/Dhaka
+•	All scheduled queries must have appropriate partition filters
+•	All scheduled queries must have labels for quota monitoring
+•	All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+•	Implement CHECK constraints for all critical fields
+•	pattern_id must follow exact format: PATTERN-DEPT-TYPE-ABC
+•	item_code must be 2-4 alphanumeric characters
+•	action_data must follow exact format: "ctx:{action_id}:{context_data}"
+•	Implement automatic data quality checks as scheduled queries
+•	Validate pattern format using regex: /^[a-z0-9]{2,4}=\d{1,2}$/
+E. Data Expiration Policies
+•	command_patterns: 36 months
+•	prelisted_items: 24 months
+•	contextual_actions: 12 months
+•	bqml_training_contextual_actions: 90 days
+8. Department-Specific Implementation Requirements
+A. Department-Specific Command Patterns
+•	INVENTORY: Must include multi-model quantity search patterns
+sql
+SELECT
+  'PATTERN-INV-INPUT-ABC' AS pattern_id,
+  'INVENTORY' AS department_id,
+  'INPUT' AS pattern_type,
+  '^[a-z0-9]{2,4}=\d{1,2}$' AS pattern,
+  'Machine model with quantity',
+  'SPLIT(segment, "=") AS (model_code, quantity)' AS parsing_logic,
+  'a2b=2' AS sample_input,
+  'Juki A2B • 2 units' AS sample_output,
+  0.95 AS priority_score
+•	ADMIN: Must include department management patterns
+sql
+SELECT
+  'PATTERN-ADM-ADMIN-ABC' AS pattern_id,
+  'ADMIN' AS department_id,
+  'ADMIN' AS pattern_type,
+  '^adddept=\w+$' AS pattern,
+  'Add new department',
+  'REGEXP_EXTRACT(segment, "adddept=(\\w+)") AS department_name' AS parsing_logic,
+  'adddept=HR' AS sample_input,
+  'Add HR Department' AS sample_output,
+  0.95 AS priority_score
+B. Department-Specific Error Detection Logic
+•	INVENTORY: Prioritize model code and quantity validation
+python
+def validate_inventory_segment(segment):
+    # Check model code format
+    if not re.match(r'^[a-z0-9]{2,4}=\d{1,2}$', segment):
+        return {
+            'valid': False,
+            'error_type': 'INVALID_FORMAT',
+            'message': "Use format: a2b=2"
+        }
+    
+    # Check quantity range
+    quantity = int(segment.split('=')[1])
+    if quantity < 1 or quantity > 99:
+        return {
+            'valid': False,
+            'error_type': 'INVALID_QUANTITY',
+            'message': "Quantity must be between 1-99"
+        }
+    
+    return {'valid': True}
+•	ADMIN: Prioritize department management validation
+python
+def validate_admin_segment(user_id, segment):
+    # Check if user has admin privileges
+    if not is_admin(user_id):
+        return {
+            'valid': False,
+            'error_type': 'UNAUTHORIZED',
+            'message': "You don't have permission to perform admin actions"
+        }
+    
+    # Check department name format
+    if segment.startswith('adddept='):
+        dept_name = segment.split('=')[1]
+        if not re.match(r'^[a-zA-Z0-9]+$', dept_name):
+            return {
+                'valid': False,
+                'error_type': 'INVALID_DEPT_NAME',
+                'message': "Department name must be alphanumeric"
+            }
+    
+    return {'valid': True}
+C. Department-Specific Contextual Actions
+•	INVENTORY: Must include inventory-specific action suggestions
+sql
+SELECT
+  'ACTION-INV-RESULT-ABC' AS action_id,
+  'INVENTORY' AS department_id,
+  'RESULT' AS context_type,
+  'MULTI_MODEL_SEARCH' AS primary_intent,
+  'VIEW_MODEL_DETAILS' AS suggested_action,
+  'View Model Details' AS action_text,
+  'ctx:view_details:{model_code}' AS action_data,
+  0.92 AS confidence_score
+•	ADMIN: Must include admin-specific action suggestions
+sql
+SELECT
+  'ACTION-ADM-ERROR-ABC' AS action_id,
+  'ADMIN' AS department_id,
+  'ERROR' AS context_type,
+  'ADD_DEPT' AS primary_intent,
+  'USE_SIMILAR_DEPT' AS suggested_action,
+  'Use Similar Department' AS action_text,
+  'ctx:use_similar:{dept_name}' AS action_data,
+  0.85 AS confidence_score
+Critical Implementation Sequence
+1.	First, create the command_patterns table with exact partitioning and clustering
+2.	Then, create the prelisted_items table with exact partitioning and clustering
+3.	Next, create the contextual_actions table with exact partitioning and clustering
+4.	After that, implement the admin_management table structure
+5.	Then, create the bqml_training_contextual_actions table structure
+6.	Finally, implement the contextual action model training query
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the multi-input command system with contextual navigation. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+The system must be designed so that 90% of command processing happens in Layer 1 and Layer 2 (zero BigQuery quota) and ALL error suggestions MUST be presented as tappable inline keyboard options.
+For Admins and General Managers, the system must provide complete department and user management functionality through an intuitive, tappable interface with no typing required.
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.
+

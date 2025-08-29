@@ -198,21 +198,44 @@ try {
 console.log(`Package.json Configuration Summary: ${packageJsonResult ? '? PASS' : '? FAIL'}`);
 
 // Final Summary
+
+// Integrate Design 8-12 verification
+console.log('\n=== Running Design 8-12 Verification ===');
+const designResults = [];
+for (const num of [8,9,10,11,12]) {
+    try {
+        const mod = safeImport(`verify_design${num}.js`);
+        if (mod && typeof mod.runVerification === 'function') {
+            console.log(`\nRunning Design ${num} Verification...`);
+            mod.runVerification();
+            designResults.push(true);
+        } else {
+            console.log(`  Skipped Design ${num} (module or function not available)`);
+            designResults.push(false);
+        }
+    } catch (e) {
+        console.log(`  Error loading Design ${num} verification: ${e.message}`);
+        designResults.push(false);
+    }
+}
+
 console.log('\n=== System Verification Summary ===');
 console.log(`  moduleImports: ${importSummary ? '? PASS' : '? FAIL'}`);
 console.log(`  functionAccessibility: ${functionSummary ? '? PASS' : '? FAIL'}`);
 console.log(`  fileStructure: ${fileSummary ? '? PASS' : '? FAIL'}`);
 console.log(`  packageJson: ${packageJsonResult ? '? PASS' : '? FAIL'}`);
+console.log(`  design8-12: ${designResults.every(Boolean) ? '? PASS' : '? FAIL'}`);
 
-const overallStatus = importSummary && functionSummary && fileSummary && packageJsonResult;
+const overallStatus = importSummary && functionSummary && fileSummary && packageJsonResult && designResults.every(Boolean);
 console.log(`\nOverall System Status: ${overallStatus ? '? ALL TESTS PASSED' : '? ISSUES FOUND'}`);
 
 if (!overallStatus) {
-    console.log('\n?? Recommended Actions:');
-    if (!importSummary) console.log('  - Check module import errors above');
-    if (!functionSummary) console.log('  - Check function accessibility errors above');
-    if (!fileSummary) console.log('  - Check file structure errors above');
-    if (!packageJsonResult) console.log('  - Check package.json scripts configuration');
+        console.log('\n?? Recommended Actions:');
+        if (!importSummary) console.log('  - Check module import errors above');
+        if (!functionSummary) console.log('  - Check function accessibility errors above');
+        if (!fileSummary) console.log('  - Check file structure errors above');
+        if (!packageJsonResult) console.log('  - Check package.json scripts configuration');
+        if (!designResults.every(Boolean)) console.log('  - Check Design 8-12 verification output above');
 }
 
 console.log('\n=== Verification Complete ===');

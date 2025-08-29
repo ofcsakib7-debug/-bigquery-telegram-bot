@@ -160,24 +160,37 @@ try {
     
     console.log('? package.json parsed successfully');
     
+    // Define required and optional scripts
     const requiredScripts = ['test:unit', 'test:integration'];
     const optionalScripts = ['test:e2e', 'verify'];
     
-    const scriptResults = requiredScripts.map(script => {
+    // Check required scripts
+    console.log('Checking required scripts:');
+    const requiredResults = requiredScripts.map(script => {
         const exists = packageJson.scripts && packageJson.scripts[script];
         console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
         return exists;
     });
     
-    optionalScripts.forEach(script => {
+    // Check optional scripts
+    console.log('Checking optional scripts:');
+    const optionalResults = optionalScripts.map(script => {
         const exists = packageJson.scripts && packageJson.scripts[script];
         console.log(`${exists ? '?' : '?'} ${script} script ${exists ? 'exists' : 'is missing'}`);
+        return exists;
     });
     
-    packageJsonResult = scriptResults.every(result => result === true);
+    // Package.json passes if ALL required scripts are present
+    packageJsonResult = requiredResults.every(result => result === true);
+    console.log(`Required scripts check: ${packageJsonResult ? 'PASS' : 'FAIL'}`);
+    
+    // Additional info
+    const totalScripts = Object.keys(packageJson.scripts || {}).length;
+    console.log(`Total scripts found: ${totalScripts}`);
     
 } catch (error) {
     console.log(`? package.json error: ${error.message}`);
+    console.log('Error details:', error);
 }
 
 console.log(`Package.json Configuration Summary: ${packageJsonResult ? '? PASS' : '? FAIL'}`);

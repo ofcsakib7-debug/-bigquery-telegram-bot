@@ -69,6 +69,20 @@ async function handleHelpCommand(userId) {
 }
 
 /**
+ * Handle /admin command
+ * @param {string} userId - Telegram user ID
+ */
+async function handleAdminCommand(userId) {
+  try {
+    // In a real implementation, we would check if the user has admin privileges
+    // and then show the admin management options
+    console.log(`User ${userId} issued admin command`);
+  } catch (error) {
+    console.error('Error handling admin command:', error);
+  }
+}
+
+/**
  * Handle unknown commands
  * @param {string} userId - Telegram user ID
  * @param {string} command - Unknown command
@@ -204,5 +218,6 @@ Use the buttons to navigate through options.`;
 module.exports = {
   handleStartCommand,
   handleHelpCommand,
+  handleAdminCommand,
   handleUnknownCommand
 };

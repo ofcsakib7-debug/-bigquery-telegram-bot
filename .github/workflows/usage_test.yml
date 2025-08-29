@@ -1,0 +1,45 @@
+name: Usage Capacity Test
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday at 6 AM UTC
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytz
+    
+    - name: Run usage test
+      run: python mock_usage_test.py
+    
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: usage-test-results
+        path: test_results/
+    
+    - name: Create issue if quotas exceeded
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '?? Usage Quota Alert',
+            body: 'Automated test detected potential quota exceedance. Check test results for details.',
+            labels: ['quota', 'urgent']
+          })

@@ -1,5 +1,5 @@
 // tests/github_actions_test.js - GitHub Actions test for Design 6 & 7
-console.log('=== GitHub Actions Test for Design 6 & Design 7 ===\n');
+console.log('=== GitHub Actions Test for Design 6, 7, 8, 9, 10, 11, 12 ===\n');
 
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +11,12 @@ const requiredFiles = [
   'functions/search_validation.js',
   'functions/error_detection.js',
   'tests/unit/search_validation.test.js',
-  'tests/unit/error_detection.test.js'
+  'tests/unit/error_detection.test.js',
+  'verify_design8.js',
+  'verify_design9.js',
+  'verify_design10.js',
+  'verify_design11.js',
+  'verify_design12.js'
 ];
 
 let allFilesExist = true;
@@ -114,6 +119,26 @@ executionTests.forEach(([modulePath, functionName, args, moduleName]) => {
   }
 });
 
+// Run Design 8-12 verification
+console.log('\n=== Running Design 8-12 Verification ===');
+const designResults = [];
+for (const num of [8,9,10,11,12]) {
+  try {
+    const mod = require(`../verify_design${num}.js`);
+    if (mod && typeof mod.runVerification === 'function') {
+  console.log(`\nRunning Design ${num} Verification...`);
+      mod.runVerification();
+      designResults.push(true);
+    } else {
+      console.log(`  Skipped Design ${num} (module or function not available)`);
+      designResults.push(false);
+    }
+  } catch (e) {
+    console.log(`  Error loading Design ${num} verification: ${e.message}`);
+    designResults.push(false);
+  }
+}
+
 // Summary
 console.log('\n=== GitHub Actions Test Summary ===');
 
@@ -121,7 +146,8 @@ const summary = {
   fileStructure: allFilesExist ? '✅ PASS' : '❌ FAIL',
   moduleImports: allImportsSuccessful ? '✅ PASS' : '❌ FAIL',
   functionAccessibility: allFunctionsAccessible ? '✅ PASS' : '❌ FAIL',
-  functionExecution: allFunctionsExecute ? '✅ PASS' : '❌ FAIL'
+  functionExecution: allFunctionsExecute ? '✅ PASS' : '❌ FAIL',
+  design8_12: designResults.every(Boolean) ? '✅ PASS' : '❌ FAIL'
 };
 
 Object.entries(summary).forEach(([test, result]) => {
@@ -132,7 +158,7 @@ const overallSuccess = Object.values(summary).every(result => result.includes('�
 console.log(`\nOverall GitHub Actions Test Status: ${overallSuccess ? '✅ READY' : '❌ ISSUES FOUND'}`);
 
 if (overallSuccess) {
-  console.log('\n🎉 GitHub Actions test passed! Design 6 & Design 7 are ready for CI/CD.');
+  console.log('\n🎉 GitHub Actions test passed! Design 6-12 are ready for CI/CD.');
 } else {
   console.log('\n🔧 Some tests failed. Please check the output above for details.');
   process.exit(1);

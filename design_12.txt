@@ -1,0 +1,456 @@
+Design 12, Phase 1: Personalized Sales Commission & Transportation Cost Tracking System - Foundation Architecture Prompt for Qwen Coder
+
+Create the foundational database architecture for a sales commission and transportation cost tracking system that operates entirely within Google Cloud free tier limits while providing personalized commission calculation (varying by individual), marketing staff incentives, and transportation cost tracking - all linked to the challan number. Implement exactly as specified with no interpretation or deviation.
+
+Core System Requirements
+1. Personalized Commission Structure System
+Table Name: salesperson_commission_agreements
+
+Exact Schema Requirements:
+
+sql
+
+
+CREATE TABLE `project.dataset.salesperson_commission_agreements` (
+  agreement_id STRING NOT NULL,  -- Format: AGREEMENT-{YYYYMMDD}-{3-random}
+  salesperson_id STRING NOT NULL,
+  salesperson_name STRING NOT NULL,
+  role_id STRING NOT NULL,  -- Values: EXECUTIVE, SENIOR, MANAGER
+  effective_from DATE NOT NULL,
+  effective_to DATE,
+  agreement_status STRING NOT NULL,  -- Values: ACTIVE, INACTIVE, PENDING
+  approved_by STRING NOT NULL,  -- CEO/Manager Telegram User ID
+  approved_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY effective_from
+CLUSTER BY salesperson_id, agreement_status
+OPTIONS(
+  description="Personalized commission agreements for each salesperson"
+);
+Table Name: salesperson_commission_tiers
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.salesperson_commission_tiers` (
+  tier_id STRING NOT NULL,  -- Format: TIER-{YYYYMMDD}-{3-random}
+  agreement_id STRING NOT NULL,
+  machine_model_id STRING NOT NULL,
+  machine_model_name STRING NOT NULL,
+  minimum_sales_value_bdt NUMERIC,
+  commission_rate FLOAT64 NOT NULL,  -- Percentage specific to this salesperson
+  tier_description STRING NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY agreement_id, machine_model_id
+OPTIONS(
+  description="Commission tiers specific to each salesperson agreement"
+);
+Implementation Rules:
+
+agreement_id must follow exact format: AGREEMENT-20231115-ABC
+tier_id must follow exact format: TIER-20231115-ABC
+commission_rate must be between 0-10 (0.0-10.0%)
+agreement_status must be one of 3 specified values only (ACTIVE, INACTIVE, PENDING)
+created_at and updated_at must use UTC timezone
+Implement data expiration: 24 months after effective_to
+Partitioning must be on effective_from for agreements, DATE(created_at) for tiers
+Clustering must include salesperson_id as first field for agreements
+Clustering must include agreement_id as first field for tiers
+Example Commission Structure:
+
+sql
+
+-- Create agreement for John Doe (SALE-001)
+INSERT INTO `project.dataset.salesperson_commission_agreements` VALUES
+('AGREEMENT-20231115-ABC', 'SALE-001', 'John Doe', 'EXECUTIVE', '2023-11-01', NULL, 'ACTIVE', 'ceo_001', '2023-10-25 14:30:00 UTC', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
+-- John Doe's commission tiers
+INSERT INTO `project.dataset.salesperson_commission_tiers` VALUES
+('TIER-20231115-ABC', 'AGREEMENT-20231115-ABC', 'juki-ddl-8700', 'Juki DDL-8700', NULL, 1.5, 'Base rate for Juki DDL-8700', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+('TIER-20231115-DEF', 'AGREEMENT-20231115-ABC', 'brother-e4s', 'Brother E4S', 300000.0, 2.0, 'Rate for Brother E4S over ?300,000', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
+-- Create agreement for Jane Smith (SALE-002)
+INSERT INTO `project.dataset.salesperson_commission_agreements` VALUES
+('AGREEMENT-20231115-DEF', 'SALE-002', 'Jane Smith', 'SENIOR', '2023-11-01', NULL, 'ACTIVE', 'ceo_001', '2023-10-25 14:30:00 UTC', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+
+-- Jane Smith's commission tiers
+INSERT INTO `project.dataset.salesperson_commission_tiers` VALUES
+('TIER-20231115-GHI', 'AGREEMENT-20231115-DEF', 'juki-ddl-8700', 'Juki DDL-8700', NULL, 2.0, 'Senior rate for Juki DDL-8700', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP()),
+('TIER-20231115-JKL', 'AGREEMENT-20231115-DEF', 'brother-e4s', 'Brother E4S', 300000.0, 2.5, 'Senior rate for Brother E4S over ?300,000', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP());
+2. Personalized Commission Tracking System
+Table Name: personalized_commission_tracking
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.personalized_commission_tracking` (
+  tracking_id STRING NOT NULL,  -- Format: TRACK-{YYYYMMDD}-{3-random}
+  challan_number STRING NOT NULL,
+  sale_transaction_id STRING NOT NULL,
+  machine_model_id STRING NOT NULL,
+  machine_model_name STRING NOT NULL,
+  sale_price_bdt NUMERIC NOT NULL,
+  applicable_agreement_id STRING NOT NULL,
+  applicable_tier_id STRING NOT NULL,
+  commission_rate FLOAT64 NOT NULL,  -- Individual rate for this sale
+  commission_amount_bdt NUMERIC NOT NULL,
+  marketing_incentive_bdt NUMERIC,
+  marketing_staff_id STRING,
+  marketing_staff_name STRING,
+  marketing_activity_id STRING,
+  salesperson_id STRING NOT NULL,
+  salesperson_name STRING NOT NULL,
+  commission_calculated_date DATE NOT NULL,
+  commission_due_date DATE NOT NULL,
+  commission_paid_date DATE,
+  payment_status STRING NOT NULL,  -- Values: PENDING, PROCESSING, PAID
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY commission_calculated_date
+CLUSTER BY challan_number, salesperson_id
+OPTIONS(
+  description="Tracking of personalized commissions for all sales linked to challan numbers"
+);
+Critical Implementation Rules:
+
+tracking_id must follow exact format: TRACK-20231115-ABC
+commission_rate must reflect the individual salesperson's agreement
+commission_due_date must be 7 days after final payment is received
+Implement data expiration: 24 months after commission_calculated_date
+Partitioning must be on commission_calculated_date, NOT _PARTITIONTIME
+Clustering must include challan_number as first field
+NEVER query this table directly in user-facing requests
+3. Marketing Staff Incentive System
+Table Name: marketing_staff_incentives
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.marketing_staff_incentives` (
+  incentive_id STRING NOT NULL,  -- Format: INCENT-{YYYYMMDD}-{3-random}
+  marketing_staff_id STRING NOT NULL,
+  marketing_staff_name STRING NOT NULL,
+  activity_id STRING NOT NULL,
+  activity_type STRING NOT NULL,  -- Values: VISIT, MEETING, DEMO
+  activity_date DATE NOT NULL,
+  challan_number STRING NOT NULL,
+  sale_transaction_id STRING NOT NULL,
+  incentive_type STRING NOT NULL,  -- Values: NEW_CUSTOMER, LEAD_QUALITY
+  incentive_amount_bdt NUMERIC NOT NULL,
+  verification_status STRING NOT NULL,  -- Values: PENDING, VERIFIED, REJECTED
+  verification_notes STRING,
+  verified_by STRING,
+  verified_at TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY activity_date
+CLUSTER BY marketing_staff_id, verification_status
+OPTIONS(
+  description="Marketing staff incentives with verification workflow"
+);
+Critical Implementation Rules:
+
+incentive_id must follow exact format: INCENT-20231115-ABC
+verification_status must be one of 3 specified values only
+Implement data expiration: 24 months after activity_date
+Partitioning must be on activity_date, NOT _PARTITIONTIME
+Clustering must include marketing_staff_id as first field
+NEVER query this table directly in user-facing requests
+4. Transportation Cost Tracking System
+Table Name: transportation_costs
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.transportation_costs` (
+  transport_id STRING NOT NULL,  -- Format: TRANSPORT-{YYYYMMDD}-{3-random}
+  challan_number STRING NOT NULL,
+  vehicle_id STRING NOT NULL,
+  vehicle_type STRING NOT NULL,  -- Values: VAN, TRUCK, BIKE
+  total_cost_bdt NUMERIC NOT NULL,
+  customer_agreed_to_pay BOOL NOT NULL,
+  customer_payment_bdt NUMERIC,
+  company_covered_bdt NUMERIC,
+  approval_required BOOL NOT NULL,
+  approved_by STRING,  -- Manager Telegram User ID
+  approved_at TIMESTAMP,
+  approval_notes STRING,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY challan_number, vehicle_id
+OPTIONS(
+  description="Transportation costs linked to challan numbers with approval tracking"
+);
+Critical Implementation Rules:
+
+transport_id must follow exact format: TRANSPORT-20231115-ABC
+company_covered_bdt must equal total_cost_bdt minus customer_payment_bdt
+Implement data expiration: 24 months after created_at
+Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+Clustering must include challan_number as first field
+NEVER query this table directly in user-facing requests
+5. Challan-Commission Integration System
+Table Name: challan_commission_integration
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.challan_commission_integration` (
+  integration_id STRING NOT NULL,  -- Format: INTEG-{YYYYMMDD}-{3-random}
+  challan_number STRING NOT NULL,
+  machine_model_id STRING NOT NULL,
+  machine_model_name STRING NOT NULL,
+  salesperson_id STRING NOT NULL,
+  salesperson_name STRING NOT NULL,
+  salesperson_agreement_id STRING NOT NULL,
+  salesperson_commission_rate FLOAT64 NOT NULL,  -- Individual rate
+  salesperson_commission_bdt NUMERIC NOT NULL,
+  marketing_staff_id STRING,
+  marketing_staff_name STRING,
+  marketing_incentive_bdt NUMERIC,
+  total_commission_bdt NUMERIC NOT NULL,
+  transportation_cost_bdt NUMERIC NOT NULL,
+  customer_transport_payment_bdt NUMERIC,
+  company_transport_covered_bdt NUMERIC,
+  commission_due_date DATE NOT NULL,
+  last_updated TIMESTAMP NOT NULL
+)
+PARTITION BY DATE(last_updated)
+CLUSTER BY challan_number
+OPTIONS(
+  description="Integrated view of personalized commission and transportation costs for fast user-facing queries"
+);
+Critical Implementation Rules:
+
+integration_id must follow exact format: INTEG-20231115-ABC
+salesperson_commission_rate must reflect the individual salesperson's rate
+ALL user-facing queries must read from this table only
+Cache must be updated by scheduled query during off-peak hours
+Must include salesperson-specific commission details
+Must include marketing staff incentive details
+Implement automatic cache refresh at 2AM-4AM Bangladesh time
+Partitioning must be on DATE(last_updated), NOT _PARTITIONTIME
+NEVER modify existing records (append-only cache)
+6. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+NEVER query raw salesperson_commission_agreements or personalized_commission_tracking in user-facing requests
+ALWAYS filter by partitioning column first in all queries
+ALWAYS include at least one clustering column in WHERE clause
+Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+NEVER use SELECT * - always specify exact columns needed
+ALWAYS use --maximum_bytes_billed flag for all user-facing queries
+B. Layered Commission Processing
+Layer 1 (Application Logic):
+Must complete within 50ms
+Must use zero BigQuery quota
+Must validate basic commission structure
+Must return immediate commission estimates
+MUST implement the "Don't Type, Tap" philosophy
+Layer 2 (Contextual Validation):
+Must complete within 100ms
+Must use only Firestore reads (50K free tier daily)
+Must validate against salesperson's specific agreement
+Must check for logical inconsistencies
+Must provide tappable correction options
+Layer 3 (BQML Anomaly Detection):
+Must complete within 200ms
+Must check cache first (90% hit rate target)
+Must use salesperson-specific BQML models
+Must only query pre-aggregated tables
+Must limit to 100MB data scan per query
+Layer 4 (Scheduled Reconciliation):
+Must run during off-peak hours (2AM-4AM Bangladesh time)
+Must only process previous day's data
+Must filter by partition column first
+Must use --maximum_bytes_billed=100000000 (100MB) flag
+Must only include high-confidence calculations
+C. Scheduled Query Requirements
+Create daily scheduled query for salesperson_commission_agreements refresh at 02:00 Asia/Dhaka
+Create daily scheduled query for personalized_commission_tracking refresh at 02:30 Asia/Dhaka
+Create daily scheduled query for marketing_staff_incentives refresh at 03:00 Asia/Dhaka
+Create daily scheduled query for transportation_costs refresh at 03:30 Asia/Dhaka
+Create daily scheduled query for challan_commission_integration refresh at 04:00 Asia/Dhaka
+All scheduled queries must have appropriate partition filters
+All scheduled queries must have labels for quota monitoring
+All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+Implement CHECK constraints for all critical fields
+agreement_id must follow exact format: AGREEMENT-YYYYMMDD-ABC
+commission_rate must be between 0-10 (0.0-10.0%)
+Implement automatic data quality checks as scheduled queries
+Validate salesperson agreements using recursive SQL
+E. Data Expiration Policies
+salesperson_commission_agreements: 24 months
+salesperson_commission_tiers: 24 months
+personalized_commission_tracking: 24 months
+marketing_staff_incentives: 24 months
+transportation_costs: 24 months
+challan_commission_integration: 7 days
+7. Department-Specific Implementation Requirements
+A. Department-Specific Commission Views
+SALES: Must prioritize individual commission details
+sql
+
+
+SELECT
+  s.*,
+  a.agreement_status,
+  t.commission_rate,
+  t.tier_description
+FROM `project.dataset.personalized_commission_tracking` s
+JOIN `project.dataset.salesperson_commission_agreements` a
+  ON s.applicable_agreement_id = a.agreement_id
+JOIN `project.dataset.salesperson_commission_tiers` t
+  ON s.applicable_tier_id = t.tier_id
+WHERE s.salesperson_id = @user_id
+ORDER BY s.commission_calculated_date DESC
+HR: Must view commission agreements across the organization
+sql
+
+SELECT
+  a.salesperson_name,
+  a.role_id,
+  a.agreement_status,
+  t.machine_model_name,
+  t.commission_rate,
+  t.tier_description
+FROM `project.dataset.salesperson_commission_agreements` a
+JOIN `project.dataset.salesperson_commission_tiers` t
+  ON a.agreement_id = t.agreement_id
+WHERE a.agreement_status = 'ACTIVE'
+ORDER BY a.salesperson_name, t.machine_model_name
+FINANCE: Must monitor commission payouts
+sql
+
+
+SELECT
+  salesperson_id,
+  salesperson_name,
+  SUM(commission_amount_bdt) AS total_commission,
+  SUM(marketing_incentive_bdt) AS total_incentives,
+  SUM(commission_amount_bdt) + SUM(marketing_incentive_bdt) AS total_payout
+FROM `project.dataset.personalized_commission_tracking`
+WHERE commission_paid_date = CURRENT_DATE()
+GROUP BY salesperson_id, salesperson_name
+B. Personalized Commission Calculation
+Individual Commission Logic:
+python
+
+def calculate_personalized_commission(salesperson_id, machine_model_id, sale_price_bdt):
+    """Calculate commission based on salesperson's specific agreement"""
+    # 1. Get active commission agreement for this salesperson
+    agreement = bigquery.query("""
+        SELECT agreement_id
+        FROM `project.dataset.salesperson_commission_agreements`
+        WHERE 
+            salesperson_id = @salesperson_id
+            AND CURRENT_DATE() BETWEEN effective_from AND COALESCE(effective_to, CURRENT_DATE())
+            AND agreement_status = 'ACTIVE'
+        ORDER BY effective_from DESC
+        LIMIT 1
+    """, params={'salesperson_id': salesperson_id})
+    
+    if not agreement:
+        return {
+            'commission_rate': 0.0,
+            'commission_amount': 0.0,
+            'error': 'No active commission agreement found'
+        }
+    
+    # 2. Get applicable tier for this machine model and sale price
+    tier = bigquery.query("""
+        SELECT commission_rate, tier_description
+        FROM `project.dataset.salesperson_commission_tiers`
+        WHERE 
+            agreement_id = @agreement_id
+            AND machine_model_id = @machine_model_id
+            AND (@sale_price_bdt >= minimum_sales_value_bdt OR minimum_sales_value_bdt IS NULL)
+        ORDER BY minimum_sales_value_bdt DESC
+        LIMIT 1
+    """, params={
+        'agreement_id': agreement[0]['agreement_id'],
+        'machine_model_id': machine_model_id,
+        'sale_price_bdt': sale_price_bdt
+    })
+    
+    if not tier:
+        return {
+            'commission_rate': 0.0,
+            'commission_amount': 0.0,
+            'error': 'No applicable commission tier found'
+        }
+    
+    # 3. Calculate commission amount
+    commission_amount = sale_price_bdt * (tier[0]['commission_rate'] / 100)
+    
+    return {
+        'agreement_id': agreement[0]['agreement_id'],
+        'commission_rate': tier[0]['commission_rate'],
+        'commission_amount': commission_amount,
+        'tier_description': tier[0]['tier_description']
+    }
+C. Department-Specific Menu Requirements
+SALES: Must include personalized commission menus
+sql
+
+SELECT
+  'MENU-SALES-COMMISSION-ABC' AS menu_id,
+  'SALES' AS department_id,
+  'COMMISSION' AS menu_type,
+  'Commission Management' AS menu_name,
+  '''{
+    "main_menu": {
+      "title": "Commission Management",
+      "buttons": [
+        {"text": "?? View My Commission", "callback_data": "menu:commission:view"},
+        {"text": "?? View Commission Rates", "callback_data": "menu:commission:rates"},
+        {"text": "?? Project Earnings", "callback_data": "menu:commission:project"}
+      ]
+    },
+    "commission_menu": {
+      "title": "My Commission Details",
+      "buttons": [
+        {"text": "?? Commission History", "callback_data": "action:commission:history"},
+        {"text": "?? Earnings Projection", "callback_data": "action:commission:projection"},
+        {"text": "?? Export Report", "callback_data": "action:commission:export"}
+      ]
+    },
+    "rates_menu": {
+      "title": "My Commission Rates",
+      "buttons": [
+        {"text": "?? Sewing Machines", "callback_data": "action:rates:sewing"},
+        {"text": "?? Spare Parts", "callback_data": "action:rates:spare_parts"},
+        {"text": "?? Service Tools", "callback_data": "action:rates:service_tools"}
+      ]
+    }
+  }''' AS menu_structure,
+  CURRENT_TIMESTAMP() AS created_at,
+  CURRENT_TIMESTAMP() AS updated_at
+Critical Implementation Sequence
+First, create the salesperson_commission_agreements table with exact partitioning and clustering
+Then, create the salesperson_commission_tiers table with exact partitioning and clustering
+Next, create the personalized_commission_tracking table with exact partitioning and clustering
+After that, create the marketing_staff_incentives table
+Then, create the transportation_costs table
+Finally, create the challan_commission_integration table
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the personalized commission and transportation cost tracking system. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+
+The system must be designed so that 90% of commission tracking comes from cache tables with no processing of raw data tables required. ALL user-facing queries must filter by partition column first and include clustering columns in WHERE clause.
+
+For all commission interactions, the system must present tappable inline keyboard options instead of requiring typing, following the "Don't Type, Tap" philosophy. ALL commission calculations must use the individual salesperson's specific agreement, not a generic rate.
+
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.

@@ -124,7 +124,34 @@ function testCacheKeyGeneration() {
 
 // ---------- Run everything ----------
 console.log('Starting system verification...\n');
-const results = [ testChallanValidation(), testSnoozeCalculations(), testCacheKeyGeneration() ];
+const results = [
+  testChallanValidation(),
+  testSnoozeCalculations(),
+  testCacheKeyGeneration()
+];
+
+// Integrate Design 8-12 verification
+function runDesignVerification(designNum) {
+  try {
+    const mod = require(`./verify_design${designNum}.js`);
+    if (mod && typeof mod.runVerification === 'function') {
+      console.log(`\nRunning Design ${designNum} Verification...`);
+      mod.runVerification();
+      return true;
+    } else {
+      console.log(`  Skipped Design ${designNum} (module or function not available)`);
+      return false;
+    }
+  } catch (e) {
+    console.log(`  Error loading Design ${designNum} verification: ${e.message}`);
+    return false;
+  }
+}
+
+for (const num of [8,9,10,11,12]) {
+  results.push(runDesignVerification(num));
+}
+
 const passed  = results.filter(Boolean).length;
 console.log('\n=== Verification Summary ===');
 console.log(`Passed: ${passed}/${results.length} test suites`);

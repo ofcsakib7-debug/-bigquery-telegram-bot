@@ -1,0 +1,391 @@
+Design 10, Phase 1: BQML-Powered Due List Management System - Foundation Architecture Prompt for Qwen Coder
+
+Create the foundational database architecture for a BQML-powered due list management system that operates entirely within Google Cloud free tier limits while providing intelligent payment reminders, customer reliability scoring, and role-based views. Implement exactly as specified with no interpretation or deviation.
+
+Core System Requirements
+1. The "Due Item" Entity (The Fundamental Data Structure)
+Table Name: due_items
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.due_items` (
+  due_id STRING NOT NULL,  -- Format: DUE-{YYYYMMDD}-{3-random}
+  entity_type STRING NOT NULL,  -- Values: CUSTOMER, VENDOR, INTERNAL
+  entity_id STRING NOT NULL,  -- Reference to actual entity
+  entity_name STRING NOT NULL,
+  due_amount NUMERIC NOT NULL,
+  due_date DATE NOT NULL,
+  status STRING NOT NULL,  -- Values: PENDING, PARTIAL, COMPLETED, OVERDUE
+  payment_method STRING,  -- Values: CASH, BANK_TRANSFER, MOBILE_BANKING
+  payment_reference STRING,
+  reminder_count INT64 DEFAULT 0,
+  last_reminder_timestamp TIMESTAMP,
+  snooze_until TIMESTAMP,
+  priority_level STRING NOT NULL,  -- Values: HIGH, MEDIUM, LOW
+  internal_payment_type STRING,  -- For internal payments (ELECTRICITY, RENT, SALARY, etc.)
+  department_responsible STRING,  -- Department responsible for payment
+  recurring_frequency STRING,  -- Values: DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUAL
+  related_cost_center STRING,  -- Cost center for accounting
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY due_date
+CLUSTER BY entity_type, status, priority_level
+OPTIONS(
+  description="Centralized due payment schedule with intelligent tracking"
+);
+Implementation Rules:
+
+due_id must follow exact format: DUE-20231110-ABC
+status must be one of 4 specified values only (PENDING, PARTIAL, COMPLETED, OVERDUE)
+priority_level must be calculated using BQML (never static)
+created_at and updated_at must use UTC timezone
+Implement data expiration: 36 months after due_date
+Partitioning must be on due_date, NOT _PARTITIONTIME
+Clustering must include entity_type as first field
+NEVER query this table directly in user-facing requests
+2. Dual-Layer Due Tracking System
+A. Journal Table: due_payment_journal
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.due_payment_journal` (
+  journal_id STRING NOT NULL,  -- Format: JOURNAL-{YYYYMMDD}-{3-random}
+  due_id STRING NOT NULL,
+  transaction_type STRING NOT NULL,  -- Values: CREATE, PARTIAL_PAYMENT, COMPLETED, REMINDER_SENT
+  amount NUMERIC,
+  timestamp TIMESTAMP NOT NULL,
+  user_id STRING NOT NULL,
+  details JSON,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(timestamp)
+CLUSTER BY due_id, transaction_type
+OPTIONS(
+  description="Append-only journal for all due item changes (immutable record)"
+);
+B. Cache Table: due_payment_cache
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.due_payment_cache` (
+  due_id STRING NOT NULL,
+  entity_type STRING NOT NULL,
+  entity_id STRING NOT NULL,
+  entity_name STRING NOT NULL,
+  total_due_amount NUMERIC NOT NULL,
+  remaining_due_amount NUMERIC NOT NULL,
+  due_date DATE NOT NULL,
+  status STRING NOT NULL,
+  priority_level STRING NOT NULL,
+  customer_reliability_score FLOAT64,
+  last_updated TIMESTAMP NOT NULL
+)
+PARTITION BY DATE(last_updated)
+CLUSTER BY entity_type, status, priority_level
+OPTIONS(
+  description="Materialized view of current due state for fast user-facing queries"
+);
+Critical Implementation Rules:
+
+Journal table must be append-only (never modified)
+Cache table must be updated by scheduled query during off-peak hours
+ALL user-facing queries must read from cache table only
+Journal table must NEVER be queried in user-facing requests
+Cache table must include customer_reliability_score for prioritization
+Implement automatic cache refresh at 2AM-4AM Bangladesh time
+Partitioning must be on DATE(last_updated), NOT _PARTITIONTIME
+3. Snooze Intelligence System
+Table Name: user_forgetfulness_profiles
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.user_forgetfulness_profiles` (
+  profile_id STRING NOT NULL,  -- Format: PROF-{YYYYMMDD}-{3-random}
+  user_id STRING NOT NULL,
+  preferred_snooze_duration INT64 NOT NULL,  -- In seconds
+  optimal_reminder_strategy STRING NOT NULL,  -- Values: GENTLE_SNOOZE_FRIENDLY, AGGRESSIVE_EARLY
+  average_response_time_seconds INT64 NOT NULL,
+  snooze_acceptance_rate FLOAT64 NOT NULL,
+  completion_rate_after_snooze FLOAT64 NOT NULL,
+  snapshot_date DATE NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY snapshot_date
+CLUSTER BY user_id, optimal_reminder_strategy
+OPTIONS(
+  description="User-specific forgetfulness profiles for personalized snooze options"
+);
+Implementation Rules:
+
+profile_id must follow exact format: PROF-20231110-ABC
+snapshot_date must use Bangladesh timezone (Asia/Dhaka)
+optimal_reminder_strategy must be one of 2 specified values only
+Implement data expiration: 12 months after snapshot_date
+Partitioning must be on snapshot_date, NOT _PARTITIONTIME
+Clustering must include user_id as first field
+Critical Implementation Rules for Snooze Options:
+
+MUST present snooze options as tappable inline keyboard buttons
+MUST personalize options based on user's forgetfulness profile
+MUST include "EndInit of work" and "EndInit of day" options
+MUST never present more than 3 snooze options
+MUST format as Telegram inline keyboard (2 buttons per row)
+MUST follow callback data format: snooze:{duration}:{due_id}
+Example Inline Keyboard Structure:
+
+json
+
+{
+  "inline_keyboard": [
+    [{"text": "? 30 min", "callback_data": "snooze:30m:DUE-20231110-ABC"}],
+    [{"text": "?? 1 hour", "callback_data": "snooze:1h:DUE-20231110-ABC"}],
+    [{"text": "EndInit of work", "callback_data": "snooze:work_end:DUE-20231110-ABC"}]
+  ]
+}
+4. Customer Payment Management System
+Table Name: crm_customer_ledger
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.crm_customer_ledger` (
+  customer_id STRING NOT NULL,
+  customer_name STRING NOT NULL,
+  total_due_amount NUMERIC NOT NULL,
+  avg_days_to_pay FLOAT64 NOT NULL,
+  on_time_payment_rate FLOAT64 NOT NULL,
+  customer_reliability_score FLOAT64 NOT NULL,
+  machine_breakdown_rate FLOAT64,
+  service_request_frequency FLOAT64,
+  recommended_credit_limit_bdt NUMERIC,
+  last_updated TIMESTAMP NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(last_updated)
+CLUSTER BY customer_reliability_score, on_time_payment_rate
+OPTIONS(
+  description="Customer payment profiles with reliability scoring"
+);
+Implementation Rules:
+
+customer_reliability_score must be between 0-100 (0 = perfect)
+on_time_payment_rate must be between 0-100 (percentage)
+Implement data expiration: 24 months after last_updated
+Partitioning must be on DATE(last_updated), NOT _PARTITIONTIME
+Clustering must include customer_reliability_score as first field
+Must be updated daily via scheduled query
+5. BQML Training Data Infrastructure
+Table Name: bqml_training_customer_payments
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.bqml_training_customer_payments` (
+  user_id STRING NOT NULL,
+  customer_id STRING NOT NULL,
+  days_past_due INT64 NOT NULL,
+  total_due_amount NUMERIC NOT NULL,
+  avg_days_to_pay FLOAT64 NOT NULL,
+  on_time_payment_rate FLOAT64 NOT NULL,
+  customer_reliability_score FLOAT64 NOT NULL,
+  machine_breakdown_rate FLOAT64,
+  service_request_frequency FLOAT64,
+  paid_on_time BOOL NOT NULL,
+  training_date DATE NOT NULL
+)
+PARTITION BY training_date
+CLUSTER BY customer_reliability_score, on_time_payment_rate
+OPTIONS(
+  description="Pre-aggregated customer payment data for BQML model training"
+);
+Implementation Rules:
+
+training_date must be set to the date of aggregation
+Implement automatic data expiration: 90 days after training_date
+Must be rebuilt daily from payment_receipts
+Partitioning must be on training_date, NOT timestamp
+Clustering must include customer_reliability_score as first field
+Critical Implementation Details:
+
+Must be trained daily during off-peak hours (2AM-4AM Bangladesh time)
+Must use logistic regression for binary classification
+Must include customer_reliability_score as a feature
+Must only use data from the last 180 days
+Must validate model performance before deployment
+Must never query directly in user-facing requests
+6. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+NEVER query raw due_items or due_payment_journal in user-facing requests
+ALWAYS filter by partitioning column first in all queries
+ALWAYS include at least one clustering column in WHERE clause
+Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+NEVER use SELECT * - always specify exact columns needed
+ALWAYS use --maximum_bytes_billed flag for all user-facing queries
+B. Layered Validation Rules
+Layer 1 (Application Logic):
+Must complete within 50ms
+Must use zero BigQuery quota
+Must validate basic due item structure
+Must check for duplicate entries
+Must return immediate suggestions for common errors
+Layer 2 (Contextual Validation):
+Must complete within 100ms
+Must use only Firestore reads (50K free tier daily)
+Must validate against user's department rules
+Must check for logical inconsistencies
+Must provide tappable correction options
+Layer 3 (BQML Anomaly Detection):
+Must complete within 200ms
+Must check cache first (90% hit rate target)
+Must use department-specific BQML models
+Must only query pre-aggregated tables
+Must limit to 100MB data scan per query
+Layer 4 (Scheduled Reconciliation):
+Must run during off-peak hours (2AM-4AM Bangladesh time)
+Must only process previous day's data
+Must filter by partition column first
+Must use --maximum_bytes_billed=100000000 (100MB) flag
+Must only include high-confidence errors (confidence_score > 0.85)
+C. Scheduled Query Requirements
+Create daily scheduled query for due_payment_cache refresh at 02:00 Asia/Dhaka
+Create daily scheduled query for crm_customer_ledger refresh at 02:30 Asia/Dhaka
+Create daily scheduled query for bqml_training_customer_payments at 03:00 Asia/Dhaka
+Create daily scheduled query for customer_payment_model retraining at 04:00 Asia/Dhaka
+All scheduled queries must have appropriate partition filters
+All scheduled queries must have labels for quota monitoring
+All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+Implement CHECK constraints for all critical fields
+due_id must follow exact format: DUE-YYYYMMDD-ABC
+status must be one of 4 specified values only
+customer_reliability_score must be between 0-100
+Implement automatic data quality checks as scheduled queries
+Validate recurring_frequency using regex: /^(DAILY|WEEKLY|MONTHLY|QUARTERLY|ANNUAL)$/
+E. Data Expiration Policies
+due_items: 36 months
+due_payment_journal: 36 months
+due_payment_cache: 7 days
+crm_customer_ledger: 24 months
+user_forgetfulness_profiles: 12 months
+bqml_training_customer_payments: 90 days
+7. Department-Specific Implementation Requirements
+A. Department-Specific Due Items
+INVENTORY: Must link due items to machine sales
+sql
+
+SELECT
+  d.*,
+  i.machine_model_name,
+  i.branch_id
+FROM `project.dataset.due_payment_cache` d
+JOIN `project.dataset.machine_inventory_cache` i
+  ON d.entity_id = i.sale_transaction_id
+WHERE d.entity_type = 'CUSTOMER'
+FINANCE: Must integrate with accounting_general_ledger
+sql
+
+?
+SELECT
+  d.*,
+  g.account_head,
+  g.voucher_type
+FROM `project.dataset.due_payment_cache` d
+JOIN `project.dataset.accounting_general_ledger` g
+  ON d.due_id = g.reference_id
+WHERE d.entity_type = 'VENDOR'
+INTERNAL: Must include utility and operational payments
+sql
+
+SELECT
+  due_id,
+  entity_name,
+  due_amount,
+  due_date,
+  internal_payment_type,
+  department_responsible
+FROM `project.dataset.due_payment_cache`
+WHERE entity_type = 'INTERNAL'
+B. Department-Specific Reminder Strategies
+SALES: Must prioritize high-value customer payments
+sql
+
+CREATE OR REPLACE MODEL `project.dataset.sales_reminder_model`
+OPTIONS(
+  model_type = 'logistic_reg',
+  input_label_cols = ['is_high_priority']
+) AS
+SELECT
+  total_due_amount,
+  customer_reliability_score,
+  CASE WHEN total_due_amount > 500000 THEN TRUE ELSE FALSE END AS is_high_priority
+FROM `project.dataset.crm_customer_ledger`
+FINANCE: Must prioritize overdue internal payments
+sql
+CREATE OR REPLACE MODEL `project.dataset.finance_reminder_model`
+OPTIONS(
+  model_type = 'logistic_reg',
+  input_label_cols = ['is_high_priority']
+) AS
+SELECT
+  due_amount,
+  DATE_DIFF(CURRENT_DATE(), due_date, DAY) AS days_overdue,
+  CASE WHEN days_overdue > 0 THEN TRUE ELSE FALSE END AS is_high_priority
+FROM `project.dataset.due_payment_cache`
+WHERE entity_type = 'INTERNAL'
+C. Role-Based Due Management Views
+STAFF: Must only show their assigned due items
+sql
+
+SELECT *
+FROM `project.dataset.due_payment_cache`
+WHERE assigned_to = @user_id
+  AND status IN ('PENDING', 'PARTIAL')
+MANAGER: Must show team due items with performance metrics
+sql
+
+SELECT
+  d.*,
+  u.user_name,
+  u.performance_score
+FROM `project.dataset.due_payment_cache` d
+JOIN `project.dataset.user_profiles` u
+  ON d.assigned_to = u.user_id
+WHERE u.manager_id = @user_id
+ADMIN: Must show company-wide due items with reliability analysis
+sql
+SELECT
+  d.*,
+  c.customer_reliability_score
+FROM `project.dataset.due_payment_cache` d
+JOIN `project.dataset.crm_customer_ledger` c
+  ON d.entity_id = c.customer_id
+WHERE d.entity_type = 'CUSTOMER'
+Critical Implementation Sequence
+First, create the due_items table with exact partitioning and clustering
+Then, create the due_payment_journal table with exact partitioning and clustering
+Next, create the due_payment_cache table with exact partitioning and clustering
+After that, create the user_forgetfulness_profiles table
+Then, create the crm_customer_ledger table
+Next, create the bqml_training_customer_payments table
+Finally, implement the customer_payment_model creation query
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the BQML-powered due list management system. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+
+The system must be designed so that 90% of due list requests come from due_payment_cache with no processing of raw data tables required. ALL user-facing queries must filter by partition column first and include clustering columns in WHERE clause.
+
+For all due list interactions, the system must present tappable inline keyboard options instead of requiring typing, following the "Don't Type, Tap" philosophy. Snooze options must be personalized based on user's forgetfulness profile.
+
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.

@@ -1,0 +1,538 @@
+Design 11, Phase 1: Dealer & Sub-Dealer Management System - Foundation Architecture Prompt for Qwen Coder
+
+Create the foundational database architecture for a dealer and sub-dealer management system that operates entirely within Google Cloud free tier limits while providing hierarchical dealer management, stock transfer tracking, challan processing, payment monitoring, and BQML-powered trend analysis. Implement exactly as specified with no interpretation or deviation.
+
+Core System Requirements
+1. Dealer Hierarchy Management System
+Table Name: dealer_profiles
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_profiles` (
+  dealer_id STRING NOT NULL,  -- Format: DEALER-{YYYYMMDD}-{3-random}
+  dealer_name STRING NOT NULL,
+  dealer_type STRING NOT NULL,  -- Values: DEALER, SUB_DEALER
+  parent_dealer_id STRING,  -- NULL for top-level dealers
+  contact_person STRING NOT NULL,
+  contact_phone STRING NOT NULL,
+  contact_email STRING,
+  address STRING NOT NULL,
+  territory STRING NOT NULL,  -- Geographic territory
+  opening_date DATE NOT NULL,
+  status STRING NOT NULL,  -- Values: ACTIVE, INACTIVE, PROBATION
+  dealer_tier STRING NOT NULL,  -- Values: PLATINUM, GOLD, SILVER, BRONZE
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY opening_date
+CLUSTER BY dealer_type, status, dealer_tier
+OPTIONS(
+  description="Dealer and sub-dealer profile management with hierarchical relationships"
+);
+Implementation Rules:
+
+dealer_id must follow exact format: DEALER-20231115-ABC
+dealer_type must be one of 2 specified values only (DEALER, SUB_DEALER)
+parent_dealer_id must be NULL for top-level dealers only
+dealer_tier must be calculated using BQML (never static)
+created_at and updated_at must use UTC timezone
+Implement data expiration: 36 months after opening_date
+Partitioning must be on opening_date, NOT _PARTITIONTIME
+Clustering must include dealer_type as first field
+NEVER query this table directly in user-facing requests
+2. Dealer Credit Management System
+Table Name: dealer_credit_terms
+
+Exact Schema Requirements:
+
+sql
+
+
+CREATE TABLE `project.dataset.dealer_credit_terms` (
+  credit_id STRING NOT NULL,  -- Format: CREDIT-{YYYYMMDD}-{3-random}
+  dealer_id STRING NOT NULL,
+  credit_limit_bdt NUMERIC NOT NULL,
+  credit_days INT64 NOT NULL,
+  interest_rate_per_day FLOAT64 NOT NULL,
+  discount_structure JSON NOT NULL,  -- Volume-based discount tiers
+  minimum_order_value_bdt NUMERIC NOT NULL,
+  last_credit_review DATE NOT NULL,
+  credit_score FLOAT64 NOT NULL,
+  credit_risk_category STRING NOT NULL,  -- Values: LOW, MEDIUM, HIGH
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY last_credit_review
+CLUSTER BY dealer_id, credit_risk_category
+OPTIONS(
+  description="Dealer credit terms with BQML-powered risk scoring"
+);
+Implementation Rules:
+
+credit_id must follow exact format: CREDIT-20231115-ABC
+credit_risk_category must be calculated using BQML
+credit_score must be between 0-100 (0 = perfect credit)
+created_at and updated_at must use UTC timezone
+Implement data expiration: 24 months after last_credit_review
+Partitioning must be on last_credit_review, NOT _PARTITIONTIME
+Clustering must include dealer_id as first field
+3. Dual-Layer Stock Transfer System
+A. Journal Table: dealer_stock_transfers_journal
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_stock_transfers_journal` (
+  transfer_id STRING NOT NULL,  -- Format: TRANSFER-{YYYYMMDD}-{3-random}
+  transfer_date TIMESTAMP NOT NULL,
+  from_branch_id STRING NOT NULL,
+  to_dealer_id STRING NOT NULL,
+  transfer_type STRING NOT NULL,  -- Values: NEW_STOCK, RETURN, EXCHANGE
+  transfer_status STRING NOT NULL,  -- Values: PENDING, SHIPPED, DELIVERED, RECEIVED
+  challan_number STRING NOT NULL,
+  challan_date DATE NOT NULL,
+  vehicle_id STRING,  -- For logistics tracking
+  driver_id STRING,
+  expected_delivery_date DATE,
+  actual_delivery_date DATE,
+  created_by STRING NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(transfer_date)
+CLUSTER BY to_dealer_id, transfer_status, transfer_type
+OPTIONS(
+  description="Append-only journal for all dealer stock transfers"
+);
+B. Cache Table: dealer_stock_transfers_cache
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_stock_transfers_cache` (
+  transfer_id STRING NOT NULL,
+  challan_number STRING NOT NULL,
+  dealer_id STRING NOT NULL,
+  dealer_name STRING NOT NULL,
+  branch_id STRING NOT NULL,
+  branch_name STRING NOT NULL,
+  total_items INT64 NOT NULL,
+  total_value_bdt NUMERIC NOT NULL,
+  status STRING NOT NULL,
+  last_updated TIMESTAMP NOT NULL
+)
+PARTITION BY DATE(last_updated)
+CLUSTER BY dealer_id, status
+OPTIONS(
+  description="Materialized view of current dealer stock transfers for fast user-facing queries"
+);
+Critical Implementation Rules:
+
+ALL user-facing queries must read from cache table only
+Cache must be updated by scheduled query during off-peak hours
+Must include dealer_name and branch_name for quick reporting
+Must include total_value_bdt for financial reporting
+Implement automatic cache refresh at 2AM-4AM Bangladesh time
+Partitioning must be on DATE(last_updated), NOT _PARTITIONTIME
+NEVER modify existing records (append-only journal)
+4. Challan Management System
+Table Name: dealer_challan_items
+
+Exact Schema Requirements:
+
+sql
+
+
+CREATE TABLE `project.dataset.dealer_challan_items` (
+  challan_item_id STRING NOT NULL,  -- Format: CHALLANITEM-{YYYYMMDD}-{3-random}
+  transfer_id STRING NOT NULL,
+  challan_number STRING NOT NULL,
+  machine_model_id STRING NOT NULL,
+  machine_model_name STRING NOT NULL,
+  serial_number STRING,  -- For tracking individual units
+  quantity INT64 NOT NULL,
+  dealer_price_bdt NUMERIC NOT NULL,
+  discount_percent FLOAT64 NOT NULL,
+  final_price_bdt NUMERIC NOT NULL,
+  warranty_months INT64 NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY challan_number, machine_model_id
+OPTIONS(
+  description="Detailed item-level information for dealer challans"
+);
+Implementation Rules:
+
+challan_item_id must follow exact format: CHALLANITEM-20231115-ABC
+final_price_bdt must be calculated as: dealer_price_bdt * (1 - discount_percent/100)
+created_at must use UTC timezone
+Implement data expiration: 36 months after created_at
+Partitioning must be on DATE(created_at), NOT _PARTITIONTIME
+Clustering must include challan_number as first field
+5. Dealer Payment Management System
+Table Name: dealer_payment_journal
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_payment_journal` (
+  payment_id STRING NOT NULL,  -- Format: PAY-{YYYYMMDD}-{3-random}
+  dealer_id STRING NOT NULL,
+  dealer_name STRING NOT NULL,
+  challan_number STRING,  -- NULL for advance payments
+  payment_timestamp TIMESTAMP NOT NULL,
+  payment_method STRING NOT NULL,  -- Values: CASH, BANK_TRANSFER, MOBILE_BANKING
+  bank_account_number STRING,
+  payment_amount_bdt NUMERIC NOT NULL,
+  receiving_branch_id STRING NOT NULL,
+  payment_for_month DATE NOT NULL,  -- Month this payment is for
+  payment_type STRING NOT NULL,  -- Values: ADVANCE, AGAINST_CHALLAN, SETTLEMENT
+  approved_by STRING,  -- Telegram User ID
+  initiated_by STRING,  -- Telegram User ID
+  notes STRING,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY DATE(payment_timestamp)
+CLUSTER BY dealer_id, payment_type, payment_method
+OPTIONS(
+  description="Append-only journal for all dealer payments"
+);
+Critical Implementation Rules:
+
+payment_id must follow exact format: PAY-20231115-ABC
+payment_for_month must be first day of the month (e.g., 2023-11-01)
+Implement data expiration: 36 months after payment_timestamp
+Partitioning must be on DATE(payment_timestamp), NOT _PARTITIONTIME
+Clustering must include dealer_id as first field
+NEVER modify existing records (append-only journal)
+6. Dealer Financial Ledger System
+Table Name: dealer_financial_ledger
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_financial_ledger` (
+  ledger_id STRING NOT NULL,  -- Format: LEDGER-{YYYYMMDD}-{3-random}
+  transaction_date DATE NOT NULL,
+  dealer_id STRING NOT NULL,
+  dealer_name STRING NOT NULL,
+  transaction_type STRING NOT NULL,  -- Values: SALE, PAYMENT, ADJUSTMENT, INTEREST
+  debit_account STRING NOT NULL,
+  credit_account STRING NOT NULL,
+  amount_bdt NUMERIC NOT NULL,
+  reference_id STRING NOT NULL,  -- Links to challan or payment
+  branch_id STRING NOT NULL,
+  voucher_number STRING NOT NULL,
+  voucher_type STRING NOT NULL,  -- Values: CHALLAN, PAYMENT, JOURNAL
+  status STRING NOT NULL,  -- Values: DRAFT, POSTED, CANCELLED
+  created_by STRING NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY transaction_date
+CLUSTER BY dealer_id, transaction_type, voucher_type
+OPTIONS(
+  description="Double-entry ledger for all dealer financial transactions"
+);
+Critical Implementation Rules:
+
+ledger_id must follow exact format: LEDGER-20231115-ABC
+Must follow double-entry bookkeeping principles
+Implement data expiration: 36 months after transaction_date
+Partitioning must be on transaction_date, NOT _PARTITIONTIME
+Clustering must include dealer_id as first field
+NEVER query this table directly in user-facing requests
+7. Dealer Performance & Trend Analysis System
+Table Name: dealer_performance_metrics
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.dealer_performance_metrics` (
+  metric_id STRING NOT NULL,  -- Format: METRIC-{YYYYMMDD}-{3-random}
+  dealer_id STRING NOT NULL,
+  dealer_name STRING NOT NULL,
+  metric_date DATE NOT NULL,
+  sales_value_bdt NUMERIC NOT NULL,
+  sales_quantity INT64 NOT NULL,
+  collection_efficiency FLOAT64 NOT NULL,
+  stock_turnover_ratio FLOAT64 NOT NULL,
+  average_payment_delay_days FLOAT64 NOT NULL,
+  new_customer_acquisition INT64 NOT NULL,
+  machine_service_rate FLOAT64 NOT NULL,
+  performance_score FLOAT64 NOT NULL,
+  performance_category STRING NOT NULL,  -- Values: EXCELLENT, GOOD, FAIR, POOR
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP()
+)
+PARTITION BY metric_date
+CLUSTER BY dealer_id, performance_category
+OPTIONS(
+  description="Pre-aggregated dealer performance metrics for reporting"
+);
+Critical Implementation Rules:
+
+metric_id must follow exact format: METRIC-20231115-ABC
+performance_score must be between 0-100 (0 = worst)
+performance_category must be calculated using BQML
+Implement data expiration: 24 months after metric_date
+Partitioning must be on metric_date, NOT _PARTITIONTIME
+Clustering must include dealer_id as first field
+8. BQML Training Data Infrastructure
+Table Name: bqml_training_dealer_performance
+
+Exact Schema Requirements:
+
+sql
+
+CREATE TABLE `project.dataset.bqml_training_dealer_performance` (
+  dealer_id STRING NOT NULL,
+  sales_value_bdt NUMERIC NOT NULL,
+  collection_efficiency FLOAT64 NOT NULL,
+  stock_turnover_ratio FLOAT64 NOT NULL,
+  average_payment_delay_days FLOAT64 NOT NULL,
+  new_customer_acquisition INT64 NOT NULL,
+  machine_service_rate FLOAT64 NOT NULL,
+  performance_score FLOAT64 NOT NULL,
+  performance_trend STRING NOT NULL,  -- Values: IMPROVING, STABLE, DECLINING
+  training_date DATE NOT NULL
+)
+PARTITION BY training_date
+CLUSTER BY dealer_id, performance_trend
+OPTIONS(
+  description="Pre-aggregated dealer performance data for BQML model training"
+);
+Implementation Rules:
+
+training_date must be set to the date of aggregation
+Implement automatic data expiration: 90 days after training_date
+Must be rebuilt daily from dealer_performance_metrics
+Partitioning must be on training_date, NOT timestamp
+Clustering must include dealer_id as first field
+Critical Implementation Details:
+
+Must be trained daily during off-peak hours (2AM-4AM Bangladesh time)
+Must use boosted tree classifier for performance trend prediction
+Must include dealer_tier as a categorical feature
+Must only use data from the last 180 days
+Must validate model performance before deployment
+Must never query directly in user-facing requests
+9. Quota-Saving Implementation Requirements
+A. Partitioning & Clustering Rules
+NEVER query raw dealer_profiles or dealer_stock_transfers_journal in user-facing requests
+ALWAYS filter by partitioning column first in all queries
+ALWAYS include at least one clustering column in WHERE clause
+Use approximate functions (APPROX_COUNT_DISTINCT) where exact counts aren't needed
+For large aggregations, always use approximate quantiles (APPROX_QUANTILES)
+NEVER use SELECT * - always specify exact columns needed
+ALWAYS use --maximum_bytes_billed flag for all user-facing queries
+B. Layered Validation Rules
+Layer 1 (Application Logic):
+Must complete within 50ms
+Must use zero BigQuery quota
+Must validate basic dealer transaction structure
+Must check for duplicate entries
+Must return immediate suggestions for common errors
+MUST implement the "Don't Type, Tap" philosophy
+Layer 2 (Contextual Validation):
+Must complete within 100ms
+Must use only Firestore reads (50K free tier daily)
+Must validate against dealer credit limits
+Must check for logical inconsistencies
+Must provide tappable correction options
+Layer 3 (BQML Anomaly Detection):
+Must complete within 200ms
+Must check cache first (90% hit rate target)
+Must use dealer-specific BQML models
+Must only query pre-aggregated tables
+Must limit to 100MB data scan per query
+Layer 4 (Scheduled Reconciliation):
+Must run during off-peak hours (2AM-4AM Bangladesh time)
+Must only process previous day's data
+Must filter by partition column first
+Must use --maximum_bytes_billed=100000000 (100MB) flag
+Must only include high-confidence anomalies (confidence_score > 0.85)
+C. Scheduled Query Requirements
+Create daily scheduled query for dealer_stock_transfers_cache refresh at 02:00 Asia/Dhaka
+Create daily scheduled query for dealer_payment_cache refresh at 02:30 Asia/Dhaka
+Create daily scheduled query for dealer_performance_metrics at 03:00 Asia/Dhaka
+Create daily scheduled query for dealer_trend_model retraining at 04:00 Asia/Dhaka
+All scheduled queries must have appropriate partition filters
+All scheduled queries must have labels for quota monitoring
+All scheduled queries must use --maximum_bytes_billed flag
+D. Data Validation Requirements
+Implement CHECK constraints for all critical fields
+dealer_id must follow exact format: DEALER-YYYYMMDD-ABC
+challan_number must follow company-specific format
+performance_score must be between 0-100
+Implement automatic data quality checks as scheduled queries
+Validate dealer hierarchy using recursive SQL
+E. Data Expiration Policies
+dealer_profiles: 36 months
+dealer_credit_terms: 24 months
+dealer_stock_transfers_journal: 36 months
+dealer_stock_transfers_cache: 7 days
+dealer_payment_journal: 36 months
+dealer_payment_cache: 7 days
+dealer_performance_metrics: 24 months
+bqml_training_dealer_performance: 90 days
+10. Department-Specific Implementation Requirements
+A. Department-Specific Dealer Views
+SALES: Must prioritize high-value dealer relationships
+sql
+
+
+SELECT
+  d.*,
+  c.credit_utilization_percent,
+  c.performance_score
+FROM `project.dataset.dealer_profiles` d
+JOIN `project.dataset.dealer_payment_cache` c
+  ON d.dealer_id = c.dealer_id
+WHERE d.status = 'ACTIVE'
+ORDER BY c.performance_score DESC
+LIMIT 10
+INVENTORY: Must track dealer stock levels
+sql
+
+
+SELECT
+  dealer_id,
+  dealer_name,
+  credit_limit_bdt,
+  current_outstanding_bdt,
+  credit_utilization_percent
+FROM `project.dataset.dealer_payment_cache`
+WHERE credit_utilization_percent > 80
+ORDER BY credit_utilization_percent DESC
+B. Department-Specific Challan Processing
+SALES: Must prioritize dealer credit checks
+python
+
+def check_dealer_credit(dealer_id, challan_value):
+    """Check if dealer has sufficient credit for new challan"""
+    # Get dealer credit info
+    credit_info = bigquery.query("""
+        SELECT 
+            credit_limit_bdt,
+            current_outstanding_bdt,
+            credit_utilization_percent
+        FROM `project.dataset.dealer_payment_cache`
+        WHERE dealer_id = @dealer_id
+        LIMIT 1
+    """, params={'dealer_id': dealer_id})
+    
+    # Calculate available credit
+    if not credit_info:
+        return {
+            'sufficient_credit': False,
+            'error': 'Dealer not found'
+        }
+    
+    available_credit = credit_info[0]['credit_limit_bdt'] - credit_info[0]['current_outstanding_bdt']
+    
+    # Check if sufficient credit
+    if available_credit < challan_value:
+        return {
+            'sufficient_credit': False,
+            'available_credit': available_credit,
+            'challan_value': challan_value,
+            'shortfall': challan_value - available_credit
+        }
+    
+    return {'sufficient_credit': True}
+INVENTORY: Must validate stock availability
+sql
+
+SELECT
+  m.machine_model_id,
+  m.machine_model_name,
+  i.quantity AS requested,
+  s.current_stock
+FROM `project.dataset.dealer_challan_items` i
+JOIN `project.dataset.machine_models` m
+  ON i.machine_model_id = m.machine_model_id
+LEFT JOIN `project.dataset.inventory_stock_cache` s
+  ON i.machine_model_id = s.machine_model_id
+WHERE i.transfer_id = @transfer_id
+  AND (s.current_stock < i.quantity OR s.current_stock IS NULL)
+C. Department-Specific Menu Requirements
+SALES: Must include dealer management menus
+sql
+
+SELECT
+  'MENU-SALES-DEALER-ABC' AS menu_id,
+  'SALES' AS department_id,
+  'DEALER' AS menu_type,
+  'Dealer Management' AS menu_name,
+  '''{
+    "main_menu": {
+      "title": "Dealer Management",
+      "buttons": [
+        {"text": "1?? View Dealer List", "callback_data": "menu:dealer:list"},
+        {"text": "2?? Record New Challan", "callback_data": "menu:dealer:challan"},
+        {"text": "3?? Record Payment", "callback_data": "menu:dealer:payment"}
+      ]
+    },
+    "challan_menu": {
+      "title": "New Dealer Challan",
+      "buttons": [
+        {"text": "? Add Machine Model", "callback_data": "action:challan:add_model"},
+        {"text": "? Add Spare Parts", "callback_data": "action:challan:add_parts"},
+        {"text": "? Finalize Challan", "callback_data": "action:challan:finalize"}
+      ]
+    }
+  }''' AS menu_structure,
+  CURRENT_TIMESTAMP() AS created_at,
+  CURRENT_TIMESTAMP() AS updated_at
+INVENTORY: Must include stock transfer menus
+sql
+SELECT
+  'MENU-INVENTORY-TRANSFER-DEF' AS menu_id,
+  'INVENTORY' AS department_id,
+  'TRANSFER' AS menu_type,
+  'Stock Transfer' AS menu_name,
+  '''{
+    "main_menu": {
+      "title": "Stock Transfer",
+      "buttons": [
+        {"text": "1?? Transfer to Dealer", "callback_data": "menu:transfer:dealer"},
+        {"text": "2?? Transfer Between Branches", "callback_data": "menu:transfer:branches"},
+        {"text": "3?? View Transfer History", "callback_data": "menu:transfer:history"}
+      ]
+    },
+    "transfer_menu": {
+      "title": "Transfer to Dealer",
+      "buttons": [
+        {"text": "?? Select Dealer", "callback_data": "action:transfer:select_dealer"},
+        {"text": "?? Select Items", "callback_data": "action:transfer:select_items"},
+        {"text": "?? Schedule Transfer", "callback_data": "action:transfer:schedule"}
+      ]
+    }
+  }''' AS menu_structure,
+  CURRENT_TIMESTAMP() AS created_at,
+  CURRENT_TIMESTAMP() AS updated_at
+Critical Implementation Sequence
+First, create the dealer_profiles table with exact partitioning and clustering
+Then, create the dealer_credit_terms table with exact partitioning and clustering
+Next, create the dealer_stock_transfers_journal table with exact partitioning and clustering
+After that, create the dealer_stock_transfers_cache table
+Then, create the dealer_challan_items table
+Next, create the dealer_payment_journal table
+After that, create the dealer_financial_ledger table
+Then, create the dealer_performance_metrics table
+Finally, create the bqml_training_dealer_performance table
+This architecture must operate entirely within Google Cloud free tier limits while providing the data foundation for the dealer and sub-dealer management system. Pay special attention to partitioning and clustering strategies to minimize data scanned per query.
+
+DO NOT CREATE ANY ADDITIONAL TABLES OR FIELDS BEYOND WHAT IS SPECIFIED ABOVE.
+
+The system must be designed so that 90% of dealer interactions come from cache tables with no processing of raw data tables required. ALL user-facing queries must filter by partition column first and include clustering columns in WHERE clause.
+
+For all dealer interactions, the system must present tappable inline keyboard options instead of requiring typing, following the "Don't Type, Tap" philosophy. ALL dealer transactions must pass through the 4-layer validation process to prevent quota-wasting errors.
+
+This is the complete Phase 1 specification. Implement exactly as specified without interpretation or deviation.

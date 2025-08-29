@@ -27,6 +27,9 @@ async function handleActionCallback(action, value, userId) {
       case 'view_reports':
         await handleViewReportsAction(userId);
         break;
+      case 'admin':
+        await handleAdminCallback(value, userId);
+        break;
       default:
         await handleUnknownAction(action, userId);
     }
@@ -175,6 +178,86 @@ async function handleViewReportsAction(userId) {
     
   } catch (error) {
     console.error('Error handling view reports action:', error);
+  }
+}
+
+/**
+ * Handle admin callbacks
+ * @param {string} action - Admin action
+ * @param {string} userId - Telegram user ID
+ */
+async function handleAdminCallback(action, userId) {
+  try {
+    // Import admin management functions
+    const { handleManageRoles, handleEditExistingRole } = require('./admin_management');
+    
+    const parts = action.split(':');
+    const mainAction = parts[0];
+    const subAction = parts[1];
+    const subSubAction = parts[2];
+    
+    switch (mainAction) {
+      case 'manage_roles':
+        // Handle role management
+        const roleManagementResult = await handleManageRoles(userId);
+        console.log(`Role management result for user ${userId}:`, roleManagementResult);
+        break;
+        
+      case 'edit_role':
+        if (subAction) {
+          // Handle specific role editing
+          console.log(`User ${userId} wants to edit role: ${subAction}`);
+          // In a real implementation, we would show permission editing options for this role
+        } else {
+          // Handle edit existing role selection
+          const editRoleResult = await handleEditExistingRole(userId);
+          console.log(`Edit role result for user ${userId}:`, editRoleResult);
+        }
+        break;
+        
+      case 'add_role':
+        // Handle add new role
+        console.log(`User ${userId} wants to add a new role`);
+        // In a real implementation, we would prompt for role details
+        break;
+        
+      case 'delete_role':
+        // Handle delete role
+        console.log(`User ${userId} wants to delete a role`);
+        // In a real implementation, we would show role list for deletion
+        break;
+        
+      case 'add_dept':
+        // In a real implementation, we would prompt for department name
+        console.log(`User ${userId} wants to add a department`);
+        break;
+        
+      case 'edit_dept':
+        // In a real implementation, we would show department list for editing
+        console.log(`User ${userId} wants to edit a department`);
+        break;
+        
+      case 'delete_dept':
+        // In a real implementation, we would show department list for deletion
+        console.log(`User ${userId} wants to delete a department`);
+        break;
+        
+      case 'manage_users':
+        // In a real implementation, we would show user management options
+        console.log(`User ${userId} wants to manage users`);
+        break;
+        
+      case 'view_audit':
+        // Handle view audit logs
+        console.log(`User ${userId} wants to view audit logs`);
+        // In a real implementation, we would show audit log options
+        break;
+        
+      default:
+        await handleUnknownAction(`admin:${action}`, userId);
+    }
+  } catch (error) {
+    console.error('Error handling admin callback:', error);
   }
 }
 

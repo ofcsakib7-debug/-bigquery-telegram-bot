@@ -11,6 +11,11 @@ const { Firestore } = require('@google-cloud/firestore');
 const { handleStartCommand, handleHelpCommand, handleUnknownCommand } = require('./commands');
 const { handleActionCallback, handleSnoozeCallback, handleMenuCallback, handlePaymentCallback, handleUnknownCallback } = require('./callbacks');
 const { insertRecord } = require('../bigquery/microbatching');
+const { processMultiInputCommand } = require('./multi_input_processor');
+const { isAdmin, handleAdminCommand } = require('./admin_management');
+const { getDueItems, getPersonalizedSnoozeOptions } = require('./due_items');
+const { getCustomerLedger } = require('./customer_payments');
+const { getRoleBasedDueItems } = require('./department_due_items');
 
 // Initialize Firestore
 const firestore = new Firestore();
@@ -66,6 +71,12 @@ async function handleCommand(message, userId) {
         break;
       case '/help':
         await handleHelpCommand(userId);
+        break;
+      case '/admin':
+        await handleAdminCommand(userId);
+        break;
+      case '/due':
+        await handleDueCommand(userId);
         break;
       default:
         await handleUnknownCommand(userId, command);
@@ -124,10 +135,38 @@ async function handleCallbackQuery(callbackQuery, userId) {
  */
 async function handleMessage(message, userId) {
   try {
-    // For the "Don't Type, Tap" philosophy, we should discourage free-form text
-    // In a real implementation, we would check the user's current state
-    // and guide them to use buttons instead
-    console.log(`User ${userId} sent text message: ${message.text}`);
+    // Get user profile to determine department
+    const userDoc = await firestore.collection('user_profiles').doc(userId.toString()).get();
+    const userProfile = userDoc.data();
+    const departmentId = userProfile ? userProfile.departmentId : 'GENERAL';
+    
+    // Check if this is an admin command
+    if (message.text === '/admin') {
+      const adminResult = await handleAdminCommand(userId);
+      // In a real implementation, we would send the response back to the user
+      console.log(`Admin command result for user ${userId}:`, adminResult);
+      return;
+    }
+    
+    // Process as multi-input command
+    const processingResult = await processMultiInputCommand(message.text, userId, departmentId);
+    
+    // Send acknowledgment if needed
+    if (processingResult.acknowledgment && processingResult.acknowledgment.shouldSend) {
+      // In a real implementation, we would send this message back to the user
+      console.log(`Acknowledgment for user ${userId}:`, processingResult.acknowledgment.text);
+    }
+    
+    // Handle result
+    if (processingResult.result.valid) {
+      // In a real implementation, we would send the success message and suggestions
+      console.log(`Success message for user ${userId}:`, processingResult.result.message);
+      console.log(`Suggestions for user ${userId}:`, processingResult.result.suggestions);
+    } else {
+      // In a real implementation, we would send the error message and suggestions
+      console.log(`Error for user ${userId}:`, processingResult.result.errorMessage);
+      console.log(`Suggestions for user ${userId}:`, processingResult.result.suggestions);
+    }
   } catch (error) {
     console.error('Error handling message:', error);
   }
