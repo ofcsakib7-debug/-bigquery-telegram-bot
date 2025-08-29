@@ -1,3 +1,4 @@
+const path = require('path');
 // tests/test_design6_design7.js - Comprehensive test for Design 6 & 7
 console.log('=== Comprehensive Test for Design 6 & Design 7 ===\n');
 

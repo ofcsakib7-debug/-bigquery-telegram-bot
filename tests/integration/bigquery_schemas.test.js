@@ -1,3 +1,4 @@
+const path = require('path');
 // === PHASE COMPLETION MARKER - DO NOT MODIFY ===
 // Design: Testing
 // Phase: 2

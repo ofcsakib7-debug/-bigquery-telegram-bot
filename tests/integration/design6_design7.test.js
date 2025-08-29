@@ -1,3 +1,4 @@
+const path = require('path');
 // tests/integration/design6_design7.test.js - Integration tests for Design 6 and Design 7
 
 // Import required modules

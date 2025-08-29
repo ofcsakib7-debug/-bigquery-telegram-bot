@@ -1,3 +1,4 @@
+const path = require('path');
 // tests/unit/error_detection.test.js - Unit tests for Design 7 (Logical Error Detection)
 
 const { detectLogicalError, detectFinanceError, detectInventoryError, detectSalesError, detectServiceError } = require('../../functions/error_detection');
