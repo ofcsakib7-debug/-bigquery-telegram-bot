@@ -56,6 +56,10 @@ jobs:
       run: |
         echo "=== Checking package.json Scripts ==="
         timeout 10s node scripts/test-function-accessibility-absolute.js || echo "Function accessibility test completed or timed out"
+    - name: Run unified system integration test
+      run: |
+        echo "=== Running Unified System Integration Test ==="
+        node tests/unified_system_test.js
     - name: Upload verification results
       if: always()
       uses: actions/upload-artifact@v4
