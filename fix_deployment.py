@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Cloud Functions Configuration Update Script
-Updates configuration files for Node.js 20 and 2nd gen functions
+Cloud Functions Deployment Fix Script
+Fixes service account configuration and updates Node.js version
 """
 
 import os
@@ -10,6 +10,10 @@ import json
 import yaml
 import sys
 from pathlib import Path
+
+# Configuration
+SERVICE_ACCOUNT = "telegram-bot-project-470513@appspot.gserviceaccount.com"
+PROJECT_ID = "telegram-bot-project-470513"
 
 def run_command(command, check=True, capture_output=True):
     """Run a shell command and handle errors"""
@@ -74,7 +78,7 @@ def update_package_json():
         return False
 
 def update_cloudbuild_yaml():
-    """Update cloudbuild.yaml for Node.js 20 and 2nd gen functions"""
+    """Update cloudbuild.yaml with correct service account and Node.js 20"""
     print("\n=== Updating cloudbuild.yaml ===")
     cloudbuild_path = Path("cloudbuild.yaml")
     
@@ -92,7 +96,23 @@ def update_cloudbuild_yaml():
         for step in cloudbuild_data["steps"]:
             if step.get("name") == "gcr.io/google.com/cloudsdktool/cloud-sdk":
                 args = step.get("args", [])
-                original_args = args.copy()
+                
+                # Update service account
+                service_account_updated = False
+                for i, arg in enumerate(args):
+                    if arg.startswith("--service-account="):
+                        if SERVICE_ACCOUNT not in arg:
+                            args[i] = f"--service-account={SERVICE_ACCOUNT}"
+                            print(f"Updated service account to {SERVICE_ACCOUNT}")
+                            changes_made = True
+                            service_account_updated = True
+                        break
+                
+                # Add service account if not present
+                if not service_account_updated:
+                    args.append(f"--service-account={SERVICE_ACCOUNT}")
+                    print(f"Added service account {SERVICE_ACCOUNT}")
+                    changes_made = True
                 
                 # Update runtime from nodejs18 to nodejs20
                 for i, arg in enumerate(args):
@@ -211,7 +231,7 @@ def commit_and_push_changes():
     # Commit changes
     run_command([
         "git", "commit", "-m",
-        "Update to Node.js 20 and fix Cloud Functions deployment configuration"
+        f"Fix service account to {SERVICE_ACCOUNT} and update to Node.js 20"
     ])
     
     # Push changes
@@ -220,14 +240,16 @@ def commit_and_push_changes():
     return True
 
 def main():
-    """Main function to execute configuration updates"""
-    print("Cloud Functions Configuration Update Script")
-    print("=========================================")
+    """Main function to execute all fixes"""
+    print("Cloud Functions Deployment Fix Script")
+    print("=====================================")
+    print(f"Service Account: {SERVICE_ACCOUNT}")
+    print(f"Project ID: {PROJECT_ID}")
     
     changes_made = False
     
-    # Execute configuration updates
     try:
+        # Execute all updates
         if update_package_json():
             changes_made = True
         
@@ -240,11 +262,23 @@ def main():
         if changes_made:
             commit_and_push_changes()
             
-            print("\n=== Configuration Updates Completed ===")
+            print("\n=== All Fixes Applied Successfully ===")
             print("Configuration files have been updated and pushed to repository.")
             print("\nNext steps:")
-            print("1. Ensure you've manually enabled required APIs")
-            print("2. Ensure you've manually granted IAM roles")
+            print("1. Ensure you've manually enabled required APIs:")
+            print("   - Cloud Resource Manager API")
+            print("   - Cloud Run Admin API")
+            print("   - Cloud Functions API")
+            print("   - Cloud Build API")
+            print("   - Artifact Registry API")
+            print("2. Ensure you've manually granted IAM roles to the service account:")
+            print(f"   - {SERVICE_ACCOUNT}")
+            print("   Required roles:")
+            print("   - Cloud Functions Developer")
+            print("   - Service Account Token Creator")
+            print("   - Cloud Run Admin")
+            print("   - Cloud Build Editor")
+            print("   - Artifact Registry Writer")
             print("3. Wait for the CI/CD pipeline to complete")
             print("4. Check the Cloud Function deployment status in Google Cloud Console")
             print("5. Test your Telegram bot functionality")
