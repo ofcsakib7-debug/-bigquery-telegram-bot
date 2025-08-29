@@ -1,70 +1,66 @@
-# .github/workflows/test.yml
 name: Test BigQuery Telegram Bot
-
-on:
-  push:
-    branches: [ main, dev ]
+true:
   pull_request:
-    branches: [ main, dev ]
-
+    branches:
+    - main
+    - dev
+  push:
+    branches:
+    - main
+    - dev
 jobs:
   test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x]
-        
     steps:
     - uses: actions/checkout@v4
-    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
+        cache: npm
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
     - name: Install dependencies
       run: npm ci
-      
     - name: Run environment check
       run: node tests/environment_check.js
-      
-    - name: Run unit tests
+    - continue-on-error: true
+      name: Run unit tests
       run: npm run test:unit
-      continue-on-error: true
-      
-    - name: Run integration tests
+    - continue-on-error: true
+      name: Run integration tests
       run: npm run test:integration
-      continue-on-error: true
-      
-    - name: Run Design 6 tests
+    - continue-on-error: true
+      name: Run Design 6 tests
       run: npm run test:design6
-      continue-on-error: true
-      
-    - name: Run Design 7 tests
+    - continue-on-error: true
+      name: Run Design 7 tests
       run: npm run test:design7
-      continue-on-error: true
-      
-    - name: Run CI/CD verification
+    - continue-on-error: true
+      name: Run CI/CD verification
       run: npm run test:verification
-      continue-on-error: true
-      
-    - name: Generate test report
-      if: always()
-      run: |
-        echo "=== Test Execution Summary ==="
+    - if: always()
+      name: Generate test report
+      run: 'echo "=== Test Execution Summary ==="
+
         echo "Job status: ${{ job.status }}"
+
         echo "Node version: ${{ matrix.node-version }}"
+
         echo "Branch: ${{ github.ref }}"
+
         echo "Commit: ${{ github.sha }}"
-        
-    - name: Upload test results
-      if: always()
+
+        '
+    - if: always()
+      name: Upload test results
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: |
-          coverage/
+        path: 'coverage/
+
           tests/unit/*.test.js
-          tests/integration/*.test.js
+
+          tests/integration/*.test.js'
+    strategy:
+      matrix:
+        node-version:
+        - 20.x

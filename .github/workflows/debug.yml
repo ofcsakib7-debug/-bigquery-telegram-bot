@@ -1,134 +1,108 @@
-# .github/workflows/debug.yml
 name: Debug System Issues
-
-on:
+true:
   workflow_dispatch:
     inputs:
       debug_level:
-        description: 'Debug level (basic, detailed, full)'
+        default: detailed
+        description: Debug level (basic, detailed, full)
         required: true
-        default: 'detailed'
       test_module:
-        description: 'Specific module to test (payment, snooze, cache, all)'
+        default: all
+        description: Specific module to test (payment, snooze, cache, all)
         required: true
-        default: 'all'
-
 jobs:
   debug:
     runs-on: ubuntu-latest
-    
     steps:
     - uses: actions/checkout@v4
-    
     - name: Use Node.js 18
       uses: actions/setup-node@v4
       with:
-        node-version: '18.x'
-        cache: 'npm'
-        
+        cache: npm
+        node-version: 18.x
     - name: Install dependencies
       run: npm ci
-      
     - name: Run detailed system verification
-      run: |
-        echo "=== Debugging System Issues ==="
+      run: 'echo "=== Debugging System Issues ==="
+
         echo "Debug level: ${{ github.event.inputs.debug_level }}"
+
         echo "Test module: ${{ github.event.inputs.test_module }}"
+
         echo ""
-        
+
+
         # Set debug environment variables
+
         export DEBUG=true
+
         export DEBUG_LEVEL=${{ github.event.inputs.debug_level }}
-        
+
+
         # Run system verification with full error logging
+
         node tests/system_verification.js
-        
-    - name: Run module-specific tests
-      if: ${{ github.event.inputs.test_module != 'all' }}
-      run: |
-        echo "=== Running Module-Specific Tests ==="
-        case ${{ github.event.inputs.test_module }} in
-          "payment")
-            echo "Testing Payment module..."
-            node -e "
-              try {
-                const payment = require('./functions/payment');
-                console.log('✅ Payment module loaded');
-                
-                // Test specific functions
-                if (typeof payment.validateChallanNumbers === 'function') {
-                  console.log('✅ validateChallanNumbers available');
-                  const result = payment.validateChallanNumbers('CH-2023-1001');
-                  console.log('Result:', JSON.stringify(result, null, 2));
-                }
-              } catch (error) {
-                console.error('❌ Payment module error:', error);
-                console.error('Stack trace:', error.stack);
-                process.exit(1);
-              }
-            "
-            ;;
-          "snooze")
-            echo "Testing Snooze module..."
-            node -e "
-              try {
-                const snooze = require('./functions/snooze');
-                console.log('✅ Snooze module loaded');
-                
-                // Test specific functions
-                if (typeof snooze.calculateSnoozeUntil === 'function') {
-                  console.log('✅ calculateSnoozeUntil available');
-                  const result = snooze.calculateSnoozeUntil('1h');
-                  console.log('Result:', result.toISOString());
-                }
-              } catch (error) {
-                console.error('❌ Snooze module error:', error);
-                console.error('Stack trace:', error.stack);
-                process.exit(1);
-              }
-            "
-            ;;
-          "cache")
-            echo "Testing Cache module..."
-            node -e "
-              try {
-                const cache = require('./bigquery/cache');
-                console.log('✅ Cache module loaded');
-                
-                // Test specific functions
-                if (typeof cache.generateCacheKey === 'function') {
-                  console.log('✅ generateCacheKey available');
-                  const result = cache.generateCacheKey('test', 'user123', 'context');
-                  console.log('Result:', result);
-                }
-              } catch (error) {
-                console.error('❌ Cache module error:', error);
-                console.error('Stack trace:', error.stack);
-                process.exit(1);
-              }
-            "
-            ;;
-        esac
-        
-    - name: Generate debug report
-      if: always()
-      run: |
-        echo "=== Debug Report ==="
+
+        '
+    - if: ${{ github.event.inputs.test_module != 'all' }}
+      name: Run module-specific tests
+      run: "echo \"=== Running Module-Specific Tests ===\"\ncase ${{ github.event.inputs.test_module\
+        \ }} in\n  \"payment\")\n    echo \"Testing Payment module...\"\n    node\
+        \ -e \"\n      try {\n        const payment = require('./functions/payment');\n\
+        \        console.log('\u2705 Payment module loaded');\n        \n        //\
+        \ Test specific functions\n        if (typeof payment.validateChallanNumbers\
+        \ === 'function') {\n          console.log('\u2705 validateChallanNumbers\
+        \ available');\n          const result = payment.validateChallanNumbers('CH-2023-1001');\n\
+        \          console.log('Result:', JSON.stringify(result, null, 2));\n    \
+        \    }\n      } catch (error) {\n        console.error('\u274C Payment module\
+        \ error:', error);\n        console.error('Stack trace:', error.stack);\n\
+        \        process.exit(1);\n      }\n    \"\n    ;;\n  \"snooze\")\n    echo\
+        \ \"Testing Snooze module...\"\n    node -e \"\n      try {\n        const\
+        \ snooze = require('./functions/snooze');\n        console.log('\u2705 Snooze\
+        \ module loaded');\n        \n        // Test specific functions\n       \
+        \ if (typeof snooze.calculateSnoozeUntil === 'function') {\n          console.log('\u2705\
+        \ calculateSnoozeUntil available');\n          const result = snooze.calculateSnoozeUntil('1h');\n\
+        \          console.log('Result:', result.toISOString());\n        }\n    \
+        \  } catch (error) {\n        console.error('\u274C Snooze module error:',\
+        \ error);\n        console.error('Stack trace:', error.stack);\n        process.exit(1);\n\
+        \      }\n    \"\n    ;;\n  \"cache\")\n    echo \"Testing Cache module...\"\
+        \n    node -e \"\n      try {\n        const cache = require('./bigquery/cache');\n\
+        \        console.log('\u2705 Cache module loaded');\n        \n        //\
+        \ Test specific functions\n        if (typeof cache.generateCacheKey === 'function')\
+        \ {\n          console.log('\u2705 generateCacheKey available');\n       \
+        \   const result = cache.generateCacheKey('test', 'user123', 'context');\n\
+        \          console.log('Result:', result);\n        }\n      } catch (error)\
+        \ {\n        console.error('\u274C Cache module error:', error);\n       \
+        \ console.error('Stack trace:', error.stack);\n        process.exit(1);\n\
+        \      }\n    \"\n    ;;\nesac\n"
+    - if: always()
+      name: Generate debug report
+      run: 'echo "=== Debug Report ==="
+
         echo "Job status: ${{ job.status }}"
+
         echo "Debug level: ${{ github.event.inputs.debug_level }}"
+
         echo "Test module: ${{ github.event.inputs.test_module }}"
+
         echo "Node version: $(node --version)"
+
         echo "NPM version: $(npm --version)"
+
         echo ""
+
         echo "Environment variables:"
-        env | grep -E '^(DEBUG|NODE_|NPM_)' || echo "No debug-related env vars"
-        
-    - name: Upload debug logs
-      if: always()
+
+        env | grep -E ''^(DEBUG|NODE_|NPM_)'' || echo "No debug-related env vars"
+
+        '
+    - if: always()
+      name: Upload debug logs
       uses: actions/upload-artifact@v4
       with:
         name: debug-logs-${{ github.run_number }}
-        path: |
-          *.log
+        path: '*.log
+
           tests/**/*.js
-          !node_modules/
+
+          !node_modules/'

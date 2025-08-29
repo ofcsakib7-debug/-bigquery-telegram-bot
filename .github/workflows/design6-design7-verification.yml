@@ -1,113 +1,78 @@
-# .github/workflows/design6-design7-verification.yml
 name: Verify Design 6 & 7 Components
-
-on:
-  push:
-    branches: [ main, dev ]
+true:
   pull_request:
-    branches: [ main, dev ]
-
+    branches:
+    - main
+    - dev
+  push:
+    branches:
+    - main
+    - dev
 jobs:
   verify-design6-design7:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x]
-        
     steps:
     - uses: actions/checkout@v4
-    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
+        cache: npm
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
     - name: Install dependencies
       run: npm ci
-      
     - name: Verify Design 6 module imports
-      run: |
-        echo "=== Testing Design 6 Module Imports ==="
-        node -e "
-          try {
-            const { validate_search_query } = require('./functions/search_validation');
-            console.log('✅ Search validation module imports successfully');
-            
-            // Test the function
-            const result = validate_search_query('user123', 'e cm');
-            console.log('✅ Function execution result:', result.status);
-          } catch (error) {
-            console.log('❌ Search validation module error:', error.message);
-            process.exit(1);
-          }
-        "
-      
+      run: "echo \"=== Testing Design 6 Module Imports ===\"\nnode -e \"\n  try {\n\
+        \    const { validate_search_query } = require('./functions/search_validation');\n\
+        \    console.log('\u2705 Search validation module imports successfully');\n\
+        \    \n    // Test the function\n    const result = validate_search_query('user123',\
+        \ 'e cm');\n    console.log('\u2705 Function execution result:', result.status);\n\
+        \  } catch (error) {\n    console.log('\u274C Search validation module error:',\
+        \ error.message);\n    process.exit(1);\n  }\n\"\n"
     - name: Verify Design 7 module imports
-      run: |
-        echo "=== Testing Design 7 Module Imports ==="
-        node -e "
-          try {
-            const { detectLogicalError } = require('./functions/error_detection');
-            console.log('✅ Error detection module imports successfully');
-            
-            // Test the function
-            const result = detectLogicalError({
-              department: 'FINANCE',
-              payment_date: new Date('2023-01-15'),
-              transaction_date: new Date('2023-01-10'),
-              amount: 1000
-            });
-            console.log('✅ Function execution result:', result.hasError ? 'ERROR DETECTED' : 'NO ERROR');
-          } catch (error) {
-            console.log('❌ Error detection module error:', error.message);
-            process.exit(1);
-          }
-        "
-        
+      run: "echo \"=== Testing Design 7 Module Imports ===\"\nnode -e \"\n  try {\n\
+        \    const { detectLogicalError } = require('./functions/error_detection');\n\
+        \    console.log('\u2705 Error detection module imports successfully');\n\
+        \    \n    // Test the function\n    const result = detectLogicalError({\n\
+        \      department: 'FINANCE',\n      payment_date: new Date('2023-01-15'),\n\
+        \      transaction_date: new Date('2023-01-10'),\n      amount: 1000\n   \
+        \ });\n    console.log('\u2705 Function execution result:', result.hasError\
+        \ ? 'ERROR DETECTED' : 'NO ERROR');\n  } catch (error) {\n    console.log('\u274C\
+        \ Error detection module error:', error.message);\n    process.exit(1);\n\
+        \  }\n\"\n"
     - name: Run integration verification
-      run: |
-        echo "=== Running Integration Verification ==="
-        node -e "
-          try {
-            // Import both modules
-            const { validate_search_query } = require('./functions/search_validation');
-            const { detectLogicalError } = require('./functions/error_detection');
-            console.log('✅ Both modules imported successfully');
-            
-            // Test integration
-            const searchResult = validate_search_query('user123', 'finance report');
-            console.log('Search validation result:', searchResult.status);
-            
-            const transactionResult = detectLogicalError({
-              department: 'FINANCE',
-              payment_date: new Date('2023-01-15'),
-              transaction_date: new Date('2023-01-10'),
-              amount: 1000
-            });
-            console.log('Transaction error detection result:', transactionResult.hasError ? 'ERROR DETECTED' : 'NO ERROR');
-            
-            console.log('✅ Integration verification completed successfully');
-          } catch (error) {
-            console.log('❌ Integration verification failed:', error.message);
-            process.exit(1);
-          }
-        "
-        
-    - name: Generate verification report
-      if: always()
-      run: |
-        echo "=== Design 6 & 7 Verification Summary ==="
+      run: "echo \"=== Running Integration Verification ===\"\nnode -e \"\n  try {\n\
+        \    // Import both modules\n    const { validate_search_query } = require('./functions/search_validation');\n\
+        \    const { detectLogicalError } = require('./functions/error_detection');\n\
+        \    console.log('\u2705 Both modules imported successfully');\n    \n   \
+        \ // Test integration\n    const searchResult = validate_search_query('user123',\
+        \ 'finance report');\n    console.log('Search validation result:', searchResult.status);\n\
+        \    \n    const transactionResult = detectLogicalError({\n      department:\
+        \ 'FINANCE',\n      payment_date: new Date('2023-01-15'),\n      transaction_date:\
+        \ new Date('2023-01-10'),\n      amount: 1000\n    });\n    console.log('Transaction\
+        \ error detection result:', transactionResult.hasError ? 'ERROR DETECTED'\
+        \ : 'NO ERROR');\n    \n    console.log('\u2705 Integration verification completed\
+        \ successfully');\n  } catch (error) {\n    console.log('\u274C Integration\
+        \ verification failed:', error.message);\n    process.exit(1);\n  }\n\"\n"
+    - if: always()
+      name: Generate verification report
+      run: 'echo "=== Design 6 & 7 Verification Summary ==="
+
         echo "Job status: ${{ job.status }}"
+
         echo "Node version: ${{ matrix.node-version }}"
+
         echo "Branch: ${{ github.ref }}"
+
         echo "Commit: ${{ github.sha }}"
-        
-    - name: Upload verification results
-      if: always()
+
+        '
+    - if: always()
+      name: Upload verification results
       uses: actions/upload-artifact@v4
       with:
         name: design6-design7-verification-results
-        path: |
-          *.log
+        path: '*.log'
+    strategy:
+      matrix:
+        node-version:
+        - 20.x

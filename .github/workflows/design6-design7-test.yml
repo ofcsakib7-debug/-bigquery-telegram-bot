@@ -1,123 +1,83 @@
-# .github/workflows/design6-design7-test.yml
 name: Test Design 6 & 7 Components
-
-on:
-  push:
-    branches: [ main, dev ]
+true:
   pull_request:
-    branches: [ main, dev ]
-
+    branches:
+    - main
+    - dev
+  push:
+    branches:
+    - main
+    - dev
 jobs:
   design6-design7-test:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        node-version: [18.x]
-        
     steps:
     - uses: actions/checkout@v4
-    
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
+        cache: npm
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-        
     - name: Install dependencies
       run: npm ci
-      
     - name: Run Design 6 (Search Validation) tests
-      run: |
-        echo "=== Testing Design 6: Context-Aware Search Validation ==="
-        node -e "
-          try {
-            const { validate_search_query } = require('./functions/search_validation');
-            console.log('✅ Search validation module imports successfully');
-            
-            // Test valid query
-            const result1 = validate_search_query('user123', 'e cm');
-            console.log('Valid query test:', JSON.stringify(result1));
-            
-            // Test invalid query
-            const result2 = validate_search_query('user123', 'invalid@query');
-            console.log('Invalid query test:', JSON.stringify(result2));
-            
-            console.log('✅ Design 6 tests completed successfully');
-          } catch (error) {
-            console.log('❌ Design 6 test error:', error.message);
-            process.exit(1);
-          }
-        "
-      
+      run: "echo \"=== Testing Design 6: Context-Aware Search Validation ===\"\nnode\
+        \ -e \"\n  try {\n    const { validate_search_query } = require('./functions/search_validation');\n\
+        \    console.log('\u2705 Search validation module imports successfully');\n\
+        \    \n    // Test valid query\n    const result1 = validate_search_query('user123',\
+        \ 'e cm');\n    console.log('Valid query test:', JSON.stringify(result1));\n\
+        \    \n    // Test invalid query\n    const result2 = validate_search_query('user123',\
+        \ 'invalid@query');\n    console.log('Invalid query test:', JSON.stringify(result2));\n\
+        \    \n    console.log('\u2705 Design 6 tests completed successfully');\n\
+        \  } catch (error) {\n    console.log('\u274C Design 6 test error:', error.message);\n\
+        \    process.exit(1);\n  }\n\"\n"
     - name: Run Design 7 (Error Detection) tests
-      run: |
-        echo "=== Testing Design 7: Logical Error Detection ==="
-        node -e "
-          try {
-            const { detectLogicalError } = require('./functions/error_detection');
-            console.log('✅ Error detection module imports successfully');
-            
-            // Test valid finance transaction
-            const result1 = detectLogicalError({
-              department: 'FINANCE',
-              payment_date: new Date('2023-01-15'),
-              transaction_date: new Date('2023-01-10'),
-              amount: 1000
-            });
-            console.log('Valid finance transaction test:', JSON.stringify(result1));
-            
-            // Test invalid finance transaction
-            const result2 = detectLogicalError({
-              department: 'FINANCE',
-              payment_date: new Date('2023-01-05'),
-              transaction_date: new Date('2023-01-10'),
-              amount: 1000
-            });
-            console.log('Invalid finance transaction test:', JSON.stringify(result2));
-            
-            console.log('✅ Design 7 tests completed successfully');
-          } catch (error) {
-            console.log('❌ Design 7 test error:', error.message);
-            process.exit(1);
-          }
-        "
-        
+      run: "echo \"=== Testing Design 7: Logical Error Detection ===\"\nnode -e \"\
+        \n  try {\n    const { detectLogicalError } = require('./functions/error_detection');\n\
+        \    console.log('\u2705 Error detection module imports successfully');\n\
+        \    \n    // Test valid finance transaction\n    const result1 = detectLogicalError({\n\
+        \      department: 'FINANCE',\n      payment_date: new Date('2023-01-15'),\n\
+        \      transaction_date: new Date('2023-01-10'),\n      amount: 1000\n   \
+        \ });\n    console.log('Valid finance transaction test:', JSON.stringify(result1));\n\
+        \    \n    // Test invalid finance transaction\n    const result2 = detectLogicalError({\n\
+        \      department: 'FINANCE',\n      payment_date: new Date('2023-01-05'),\n\
+        \      transaction_date: new Date('2023-01-10'),\n      amount: 1000\n   \
+        \ });\n    console.log('Invalid finance transaction test:', JSON.stringify(result2));\n\
+        \    \n    console.log('\u2705 Design 7 tests completed successfully');\n\
+        \  } catch (error) {\n    console.log('\u274C Design 7 test error:', error.message);\n\
+        \    process.exit(1);\n  }\n\"\n"
     - name: Run unit tests for Design 6 & 7
-      run: |
-        echo "=== Running Unit Tests for Design 6 & 7 ==="
-        # Check if test files exist and run them with Jest
-        if [ -f "tests/unit/search_validation.test.js" ]; then
-          echo "Running Design 6 unit tests..."
-          npx jest tests/unit/search_validation.test.js
-        else
-          echo "❌ Design 6 test file not found"
-          exit 1
-        fi
-        
-        if [ -f "tests/unit/error_detection.test.js" ]; then
-          echo "Running Design 7 unit tests..."
-          npx jest tests/unit/error_detection.test.js
-        else
-          echo "❌ Design 7 test file not found"
-          exit 1
-        fi
-        
-    - name: Generate test report
-      if: always()
-      run: |
-        echo "=== Design 6 & 7 Test Execution Summary ==="
+      run: "echo \"=== Running Unit Tests for Design 6 & 7 ===\"\n# Check if test\
+        \ files exist and run them with Jest\nif [ -f \"tests/unit/search_validation.test.js\"\
+        \ ]; then\n  echo \"Running Design 6 unit tests...\"\n  npx jest tests/unit/search_validation.test.js\n\
+        else\n  echo \"\u274C Design 6 test file not found\"\n  exit 1\nfi\n\nif [\
+        \ -f \"tests/unit/error_detection.test.js\" ]; then\n  echo \"Running Design\
+        \ 7 unit tests...\"\n  npx jest tests/unit/error_detection.test.js\nelse\n\
+        \  echo \"\u274C Design 7 test file not found\"\n  exit 1\nfi\n"
+    - if: always()
+      name: Generate test report
+      run: 'echo "=== Design 6 & 7 Test Execution Summary ==="
+
         echo "Job status: ${{ job.status }}"
+
         echo "Node version: ${{ matrix.node-version }}"
+
         echo "Branch: ${{ github.ref }}"
+
         echo "Commit: ${{ github.sha }}"
-        
-    - name: Upload test results
-      if: always()
+
+        '
+    - if: always()
+      name: Upload test results
       uses: actions/upload-artifact@v4
       with:
         name: design6-design7-test-results
-        path: |
-          *.log
+        path: '*.log
+
           tests/unit/search_validation.test.js
-          tests/unit/error_detection.test.js
+
+          tests/unit/error_detection.test.js'
+    strategy:
+      matrix:
+        node-version:
+        - 20.x
