@@ -64,6 +64,7 @@ steps:
   - --set-env-vars=BOT_TOKEN=${_BOT_TOKEN},GOOGLE_CLOUD_PROJECT=${PROJECT_ID},BIGQUERY_DATASET_ID=${_BIGQUERY_DATASET_ID}
   - --gen2
   - --allow-unauthenticated
+  - --service-account=telegram-bot-project-470513@appspot.gserviceaccount.com
   entrypoint: gcloud
   id: Deploy to Cloud Functions
   name: gcr.io/google.com/cloudsdktool/cloud-sdk

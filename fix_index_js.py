@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Cloud Functions Deployment Fix Script
-Fixes service account configuration and updates Node.js version
+Fixes index.js issue and updates Node.js version
 """
 
 import os
@@ -38,6 +38,38 @@ def run_command(command, check=True, capture_output=True):
         if check:
             sys.exit(1)
         return e
+
+def create_index_js():
+    """Create index.js file that exports the bot function"""
+    print("\n=== Creating index.js ===")
+    index_path = Path("index.js")
+    
+    # Check if index.js already exists
+    if index_path.exists():
+        print("index.js already exists. Checking content...")
+        with open(index_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Check if it already exports the bot function
+        if "require('./telegram_bot/bot')" in content:
+            print("index.js already has the correct content.")
+            return False
+        else:
+            print("index.js exists but doesn't export the bot function. Updating...")
+    
+    # Create the index.js content
+    content = """const { bot } = require('./telegram_bot/bot');
+
+module.exports = {
+  bot
+};
+"""
+    
+    with open(index_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    
+    print("index.js created successfully")
+    return True
 
 def update_package_json():
     """Update package.json to use Node.js 20"""
@@ -231,7 +263,7 @@ def commit_and_push_changes():
     # Commit changes
     run_command([
         "git", "commit", "-m",
-        f"Fix service account to {SERVICE_ACCOUNT} and update to Node.js 20"
+        f"Fix index.js issue and update to Node.js 20"
     ])
     
     # Push changes
@@ -250,6 +282,9 @@ def main():
     
     try:
         # Execute all updates
+        if create_index_js():
+            changes_made = True
+        
         if update_package_json():
             changes_made = True
         
