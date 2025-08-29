@@ -1,0 +1,17 @@
+{
+  "name": "bigquery-telegram-bot-github-actions",
+  "version": "1.0.0",
+  "description": "GitHub Actions testing setup for BigQuery Telegram Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"GitHub Actions will run tests\" && exit 0",
+    "verify-setup": "node verify_github_setup.js"
+  },
+  "keywords": [
+    "github-actions",
+    "testing",
+    "bigquery-telegram-bot"
+  ],
+  "author": "BigQuery Telegram Bot Team",
+  "license": "MIT"
+}
