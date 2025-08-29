@@ -38,5 +38,11 @@
   },
   "devDependencies": {
     "jest": "^29.7.0"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "./tests/setup.js"
+    ],
+    "testTimeout": 30000
   }
 }

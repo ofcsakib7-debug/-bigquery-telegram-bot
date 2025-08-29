@@ -1,4 +1,3 @@
-const { cleanupBigQuery } = require('./bigquery_helper');
 // === PHASE COMPLETION MARKER - DO NOT MODIFY ===
 // Design: Testing
 // Phase: 1
@@ -154,8 +153,4 @@ describe('Microbatching Functionality', () => {
       expect(mockBigQuery.table).toHaveBeenCalledWith('test_table2');
     });
   });
-});
-// Cleanup after each test
-afterEach(async () => {
-  await cleanupBigQuery();
 });
