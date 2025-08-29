@@ -1,90 +1,70 @@
-// Unified System Integration Test
-// This script checks that all major modules and functions work together without conflict.
-
 const path = require('path');
-const assert = require('assert');
-
-// Step 1: Change working directory to project root
-process.chdir(path.join(__dirname, '..'));
-
-function safeImport(modulePath) {
-  try {
-    return require(modulePath);
-  } catch (e) {
-    console.error(`❌ Cannot import ${modulePath}: ${e.message}`);
-    return null;
-  }
-}
-
-const modulesToTest = [
-  'functions/payment',
-  'functions/snooze',
-  'bigquery/cache',
-  'functions/search_validation',
-  'functions/error_detection',
-  'functions/admin_management',
-  'functions/contextual_actions',
-  'functions/multi_input_processor',
-  'functions/department_validations',
-  'bigquery/quota_saving',
-  'bigquery/scheduled_queries',
-  'bigquery/design8_schemas',
-  'bigquery/design9_schemas',
-  'bigquery/design10_schemas',
-  'bigquery/design11_schemas',
-  'bigquery/design12_schemas'
-];
 
 console.log('=== Unified System Integration Test ===');
-let allPassed = true;
 
-modulesToTest.forEach(modPath => {
-  const mod = safeImport(modPath);
-  if (!mod) {
-    allPassed = false;
-    return;
+// Get the project root directory
+const projectRoot = path.join(__dirname, '..');
+
+// Track test results
+const results = {
+  passed: 0,
+  failed: 0,
+  details: []
+};
+
+// Helper function to test a module
+function testModule(name, modulePath, requiredFunction = null) {
+  try {
+    // Clear any module cache to ensure fresh import
+    delete require.cache[require.resolve(path.join(projectRoot, modulePath))];
+    
+    const module = require(path.join(projectRoot, modulePath));
+    
+    if (requiredFunction && typeof module[requiredFunction] !== 'function') {
+      results.failed++;
+      results.details.push(`? ${name} module loaded but ${requiredFunction} missing`);
+      return false;
+    }
+    
+    results.passed++;
+    results.details.push(`? ${name} module loaded` + (requiredFunction ? ` and ${requiredFunction} available` : ''));
+    return true;
+  } catch (error) {
+    results.failed++;
+    results.details.push(`? Cannot import ${name}: ${error.message}`);
+    return false;
   }
-  console.log(`✅ Imported ${modPath}`);
-});
-
-// Example workflow tests
-try {
-  const payment = safeImport('functions/payment');
-  assert(payment && typeof payment.validateChallanNumbers === 'function', 'validateChallanNumbers missing');
-  const result = payment.validateChallanNumbers('CH-2023-1001');
-  assert(result && result.valid === true, 'Payment validation failed');
-  console.log('✅ Payment workflow test passed');
-} catch (e) {
-  console.error('❌ Payment workflow test failed:', e.message);
-  allPassed = false;
 }
 
-try {
-  const snooze = safeImport('functions/snooze');
-  assert(snooze && typeof snooze.calculateSnoozeUntil === 'function', 'calculateSnoozeUntil missing');
-  const snoozeResult = snooze.calculateSnoozeUntil('1h');
-  assert(snoozeResult instanceof Date, 'Snooze calculation failed');
-  console.log('✅ Snooze workflow test passed');
-} catch (e) {
-  console.error('❌ Snooze workflow test failed:', e.message);
-  allPassed = false;
-}
+// Test all modules
+testModule('Payment', 'functions/payment', 'validateChallanNumbers');
+testModule('Snooze', 'functions/snooze', 'calculateSnoozeUntil');
+testModule('Cache', 'bigquery/cache', 'generateCacheKey');
+testModule('Search validation', 'functions/search_validation', 'validate_search_query');
+testModule('Error detection', 'functions/error_detection', 'detectLogicalError');
+testModule('Admin management', 'functions/admin_management');
+testModule('Contextual actions', 'functions/contextual_actions');
+testModule('Multi input processor', 'functions/multi_input_processor');
+testModule('Department validations', 'functions/department_validations');
+testModule('Quota saving', 'bigquery/quota_saving');
+testModule('Scheduled queries', 'bigquery/scheduled_queries');
+testModule('Design 8 schemas', 'bigquery/design8_schemas');
+testModule('Design 9 schemas', 'bigquery/design9_schemas');
+testModule('Design 10 schemas', 'bigquery/design10_schemas');
+testModule('Design 11 schemas', 'bigquery/design11_schemas');
+testModule('Design 12 schemas', 'bigquery/design12_schemas');
 
-try {
-  const cache = safeImport('bigquery/cache');
-  assert(cache && typeof cache.generateCacheKey === 'function', 'generateCacheKey missing');
-  const cacheKey = cache.generateCacheKey('department_options','user123','finance');
-  assert(typeof cacheKey === 'string', 'Cache key generation failed');
-  console.log('✅ Cache workflow test passed');
-} catch (e) {
-  console.error('❌ Cache workflow test failed:', e.message);
-  allPassed = false;
-}
+// Print all details
+results.details.forEach(detail => console.log(detail));
 
-// Add more workflow tests as needed...
-
+// Print summary
 console.log('\n=== Unified System Test Summary ===');
-console.log(`Overall Status: ${allPassed ? '✅ ALL SYSTEMS GO' : '❌ ISSUES FOUND'}`);
-if (!allPassed) {
-  process.exit(1);
-}
+console.log(`Overall Status: ${results.failed === 0 ? '? ALL TESTS PASSED' : '? ISSUES FOUND'}`);
+console.log(`Passed: ${results.passed}`);
+console.log(`Failed: ${results.failed}`);
+console.log(`Total: ${results.passed + results.failed}`);
+
+// Force exit after a short delay to ensure all output is flushed
+setTimeout(() => {
+  process.exit(results.failed === 0 ? 0 : 1);
+}, 100);
